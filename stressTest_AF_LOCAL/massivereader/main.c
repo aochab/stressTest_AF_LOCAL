@@ -9,8 +9,13 @@ int main(int argc, char* argv[])
     }
 
     getParameters(argc,argv);
+    createServerINET();
+    createClientResponseINET();
+    communicationINET(client_fd);
 
-    printf("Port %d prefix %s",portNr,prefix);
+
+ ///   printf("Port %d prefix %s",portNr,prefix);
+    close(server_fd);
     free(prefix);
     exit(EXIT_SUCCESS);
 }
