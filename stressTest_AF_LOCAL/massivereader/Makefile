@@ -6,7 +6,7 @@ OBJ  = main.o massivereader.o
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-serwer: $(OBJ)
+massivereader: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 .PHONY: clean
