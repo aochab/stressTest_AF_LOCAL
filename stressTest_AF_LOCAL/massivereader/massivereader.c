@@ -22,6 +22,22 @@ void getParameters(int argc, char* argv[])
         }
     } 
 }
+//-----------------------------------------------------------------------------
+void socketToNonblockingMode(int socked_fd)
+{
+	//Change server socket fd to nonblock mode
+	int socketFlags = fcntl(socked_fd, F_GETFL,0);
+	if( socketFlags == -1 ) 
+	{
+		perror("socketToNonblockingMode fcntl getflags");
+		exit(EXIT_FAILURE);
+	}
+	if( fcntl(socked_fd,F_SETFL,socketFlags|O_NONBLOCK) == -1)
+	{
+		perror("socketToNonblockingMode fcntl setflags");
+		exit(EXIT_FAILURE);
+	}
+}
 //-----------------------------------------------------------------------
 void createServerINET()
 {
@@ -43,20 +59,9 @@ void createServerINET()
 		perror("createServer bind failed"); 
 		exit(EXIT_FAILURE);
 	}	
-/*
-	//Change server socket fd to nonblock mode
-	int serverFlags = fcntl(server_fd, F_GETFL,0);
-	if( serverFlags == -1 ) 
-	{
-		perror("createServerINET fcntl getflags");
-		exit(EXIT_FAILURE);
-	}
-	if( fcntl(server_fd,F_SETFL,serverFlags|O_NONBLOCK) == -1)
-	{
-		perror("createServerINET fcntl setflags");
-		exit(EXIT_FAILURE);
-	}
-*/
+
+	//socketToNonblockingMode(server_fd);
+
     if (listen(server_fd, 5) < 0) 
 	{ 
 	    perror("createServer listen failed"); 
@@ -69,40 +74,29 @@ void acceptResponseINET()
 	struct sockaddr_in clientINETAddress;
     int clientINETAddressLength = sizeof(clientINETAddress);
 
-	client_fd = accept(
-			server_fd,
-			(struct sockaddr *)&clientINETAddress,
-			(socklen_t*)&clientINETAddressLength);
-
-	if(client_fd<0)
+	if( (client_fd = accept( server_fd,(struct sockaddr *)&clientINETAddress,
+			(socklen_t*)&clientINETAddressLength)) != -1)
 	{
-		perror("createClientINET accept failed"); 
-		exit(EXIT_FAILURE); 
+		//socketToNonblockingMode(client_fd);
+		//SET EPOLL
+		struct epoll_event event;
+		event.data.fd = client_fd;
+		event.events = EPOLLIN | EPOLLET;
+		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,client_fd,&event)==-1)
+		{
+			perror("acceptResponseINET epoll_ctl");
+			exit(EXIT_FAILURE);
+		}
 	}
-/*	
-	//Change client socket fd to nonblock mode
-	int clientFlags = fcntl(client_fd, F_GETFL,0);
-	if( clientFlags == -1 ) 
+	else
 	{
-		perror("createClientINET fcntl getflags");
-		exit(EXIT_FAILURE);
-	}
-	if( fcntl(client_fd,F_SETFL,clientFlags|O_NONBLOCK) == -1)
-	{
-		perror("createClientINET fcntl setflags");
-		exit(EXIT_FAILURE);
+		if( (errno != EAGAIN) && (errno != EWOULDBLOCK))
+		{
+			perror("acceptResponseINET accept failed"); 
+			exit(EXIT_FAILURE); 
+		}
 	}
 
-	//EPOLL set
-	struct epoll_event event;
-	event.data.fd = client_fd;
-	event.events = EPOLLIN | EPOLLET;
-
-	if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1)
-	{
-		perror("createClientINET epoll_ctl");
-		exit(EXIT_FAILURE);
-	}*/
 }
 //------------------------------------------------------------------------
 void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_fd )
@@ -113,6 +107,7 @@ void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_f
 
 //	while(1)
 	//{
+	
 		bzero((struct sockaddr_un *)clientLOCALAdress,sizeof(*clientLOCALAdress));
 		//Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
         int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress));
@@ -120,7 +115,7 @@ void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_f
         {
             perror("communicationINET read failed");
         }
-
+		printf("CZYTAM %d\n",clientLOCALAdress->sun_family);
 		createClientLOCAL(clientLOCALAdress,clientLocal_fd);
 		//odsyla strukture do multiwriter
 		if( write(client_fd, (struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
