@@ -124,20 +124,17 @@ void communicationINET()
             perror("communicationINET read failed");
         }
 
-		printf("From client : %d\n",clientLOCALAdress.sun_family);
 		createClientLOCAL(&clientLOCALAdress,&clientLocal_fd);
-
-
+		//odsyla strukture do multiwriter
 		if( write(client_fd, (struct sockaddr_un *)&clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
 		{
 			perror("createClientLOCAL write failed"); 
 			exit(EXIT_FAILURE); 
 		}
 		nanosleep(&tim,0);
+		communicationLOCAL(clientLOCALAdress,clientLocal_fd);
 	//}
-//		send(client_fd, streamData, sizeof(streamData),0);
-//		printf("Message sent\n");
-//	}
+
 /*	char buff[255];
 	int n;
 	while(1)
@@ -173,7 +170,19 @@ void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
 	if( connect( *clientLocal_fd, (struct sockaddr *)clientAddress, sizeof(clientAddress) ) < 0)
     {
         clientAddress->sun_family = -1;
-		perror("cannot connet to local serwer");
-		printf("Can't connect to local serwer %d\n",clientAddress->sun_family);
+		perror("createClientLOCAL Can't connect to local serwer");
     }
+}
+//--------------------------------------------------------------------------------
+void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
+{
+ //zrobis strukture ktora nam to odbierze te reprezentacje czasu bajtu i timesec
+ char buff[255];
+ bzero(buff,sizeof(buff));
+    int bytesRead = read(clientLocal_fd,buff, sizeof(buff));
+    if(bytesRead < 0)
+    {
+            perror("communicationLOCAL read failed");
+    }
+	printf("From local %s:",buff);
 }

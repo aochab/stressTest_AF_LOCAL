@@ -27,3 +27,4 @@ void acceptResponseINET();
 void communicationINET();
 
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);
+void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);

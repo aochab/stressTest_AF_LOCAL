@@ -37,6 +37,7 @@ void communicationINET(int socket_fd)
 		memset(&response,0, sizeof(struct sockaddr_un));
 		read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
 		printf("From serwer : %d\n",response.sun_family);
+		communicationLOCAL();
 	//}
 
 }
@@ -106,4 +107,17 @@ void acceptResponseLOCAL(int serverLocal_fd)
 		perror("createResponseLOCAL accept failed"); 
 		exit(EXIT_FAILURE); 
 	}
+}
+//---------------------------------------------------------------------------------
+void communicationLOCAL()
+{
+	char buff[255];
+	int n;
+
+		bzero(buff,sizeof(buff));
+		n=0;
+		while((buff[n++] = getchar()) != '\n')
+			;
+		
+		write(clientLOCAL_fd, buff, sizeof(buff));
 }
