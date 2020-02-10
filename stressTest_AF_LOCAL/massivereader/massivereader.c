@@ -67,7 +67,6 @@ void createServerINET()
 void acceptResponseINET()
 {
 	struct sockaddr_in clientINETAddress;
-//	struct sockaddr_un streamData;
     int clientINETAddressLength = sizeof(clientINETAddress);
 
 	client_fd = accept(
@@ -106,56 +105,32 @@ void acceptResponseINET()
 	}*/
 }
 //------------------------------------------------------------------------
-void communicationINET()
-{
-	struct sockaddr_un clientLOCALAdress;
-	int clientLocal_fd; 
+void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_fd )
+{ 
 	struct timespec tim;
 	tim.tv_nsec=0;
 	tim.tv_sec=1;
 
 //	while(1)
 	//{
-		bzero((struct sockaddr_un *)&clientLOCALAdress,sizeof(clientLOCALAdress));
+		bzero((struct sockaddr_un *)clientLOCALAdress,sizeof(*clientLOCALAdress));
 		//Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
-        int bytesRead = read(client_fd,(struct sockaddr_un *)&clientLOCALAdress, sizeof(clientLOCALAdress));
+        int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress));
         if(bytesRead < 0)
         {
             perror("communicationINET read failed");
         }
 
-		createClientLOCAL(&clientLOCALAdress,&clientLocal_fd);
+		createClientLOCAL(clientLOCALAdress,clientLocal_fd);
 		//odsyla strukture do multiwriter
-		if( write(client_fd, (struct sockaddr_un *)&clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
+		if( write(client_fd, (struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
 		{
 			perror("createClientLOCAL write failed"); 
 			exit(EXIT_FAILURE); 
 		}
 		nanosleep(&tim,0);
-		communicationLOCAL(clientLOCALAdress,clientLocal_fd);
-	//}
-
-/*	char buff[255];
-	int n;
-	while(1)
-	{
-		bzero(buff,sizeof(buff));
-		read(socket_fd, buff, sizeof(buff));
-
-		printf("From client : %s \t to client :",buff);
-		bzero(buff,sizeof(buff));
-		n=0;
-		while((buff[n++] = getchar()) != '\n')
-			;
 		
-		write(socket_fd, buff, sizeof(buff));
-
-		if(strncmp("exit",buff,4) == 0 ) 
-		{
-			printf("Server exit\n");
-			break;
-		}
-	}*/
+	//}
 }
 //----------------------------------------------------------------------------
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)

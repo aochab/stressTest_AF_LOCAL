@@ -13,13 +13,13 @@
 
 int server_fd;
 int client_fd;
-int clientLOCAL_fd;
+//int clientLOCAL_fd;
 //int serverLocal_fd;
 
 //FUNCTIONS
 void createClientINET();
-void communicationINET();
+void communicationINET(int *serverLocal_fd, int *clientLocal_fd);
 void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int *serverLocal_fd);
-void acceptResponseLOCAL(int serverLocal_fd);
+void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd);
 
-void communicationLOCAL();
+void communicationLOCAL(int clientLOCAL_fd);

@@ -23,21 +23,20 @@ void createClientINET()
 	
 }
 //------------------------------------------------------------------------------
-void communicationINET(int socket_fd)
+void communicationINET(int *serverLocal_fd, int *clientLocal_fd)
 {
 	struct sockaddr_un serverLOCALAdress;
-	int serverLocal_fd;
 	struct sockaddr_un response;
 	//while(1)
 	//{
-		createSerwerLOCAL(&serverLOCALAdress,&serverLocal_fd);
-		write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
-		acceptResponseLOCAL(serverLocal_fd);
+	createSerwerLOCAL(&serverLOCALAdress,serverLocal_fd);
+	write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
+	acceptResponseLOCAL(*serverLocal_fd,clientLocal_fd);
 
-		memset(&response,0, sizeof(struct sockaddr_un));
-		read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
-		printf("From serwer : %d\n",response.sun_family);
-		communicationLOCAL();
+	memset(&response,0, sizeof(struct sockaddr_un));
+	read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
+	printf("From serwer : %d\n",response.sun_family);
+		
 	//}
 
 }
@@ -67,49 +66,26 @@ void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_f
 	    perror("createServer listen failed"); 
 	    exit(EXIT_FAILURE); 
 	} 
-/*
-	char buff[255];
-	int n;
-	while(1)
-	{
-		bzero(buff,sizeof(buff));
-		read(*serverLocal_fd, buff, sizeof(buff));
-
-		printf("From client : %s \t to client :",buff);
-		bzero(buff,sizeof(buff));
-		n=0;
-		while((buff[n++] = getchar()) != '\n')
-			;
-		
-		write(*serverLocal_fd, buff, sizeof(buff));
-
-		if(strncmp("exit",buff,4) == 0 ) 
-		{
-			printf("Server exit\n");
-			break;
-		}
-	}*/
 }
 //-----------------------------------------------------------------------------------
-void acceptResponseLOCAL(int serverLocal_fd)
+void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd)
 {
 	struct sockaddr_in clientLOCALAddress;
     int clientLOCALAddressLength = sizeof(clientLOCALAddress);
-	
 
-	clientLOCAL_fd = accept(
+	*clientLOCAL_fd = accept(
 			serverLocal_fd,
 			(struct sockaddr *)&clientLOCALAddress,
 			(socklen_t*)&clientLOCALAddressLength);
 
-	if(clientLOCAL_fd<0)
+	if(*clientLOCAL_fd<0)
 	{
 		perror("createResponseLOCAL accept failed"); 
 		exit(EXIT_FAILURE); 
 	}
 }
 //---------------------------------------------------------------------------------
-void communicationLOCAL()
+void communicationLOCAL(int clientLOCAL_fd)
 {
 	char buff[255];
 	int n;

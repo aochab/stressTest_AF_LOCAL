@@ -11,7 +11,13 @@ int main(int argc, char* argv[])
     getParameters(argc,argv);
     createServerINET();
     acceptResponseINET();
-    communicationINET();
+
+    //new LOCAL Socket
+    struct sockaddr_un clientLOCALAdress;
+	int clientLocal_fd;
+
+    communicationINET(&clientLOCALAdress,&clientLocal_fd);
+    communicationLOCAL(clientLOCALAdress,clientLocal_fd);
 
  ///   printf("Port %d prefix %s",portNr,prefix);
     close(server_fd);

@@ -24,7 +24,7 @@ void getParameters(int argc, char* argv[]);
 
 void createServerINET();
 void acceptResponseINET();
-void communicationINET();
+void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_fd );
 
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
