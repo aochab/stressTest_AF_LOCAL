@@ -49,17 +49,29 @@ int main(int argc, char* argv[])
             else if (events[i].data.fd == server_fd)
             {
                 //Set new socket
+                printf("Accept response inet\n");
                 acceptResponseINET();
             }
             else
             {
                 //Socket is ready
                 //new LOCAL Socket
-                struct sockaddr_un clientLOCALAdress;
+                struct sockaddr_un clientLOCALAddress;
                 int clientLocal_fd;
-
-                communicationINET(&clientLOCALAdress,&clientLocal_fd);
-                communicationLOCAL(clientLOCALAdress,clientLocal_fd);
+                printf("Communication inet\n");
+                communicationINET(&clientLOCALAddress);
+                printf("ATUTAJ %d",clientLOCALAddress.sun_family);
+                createClientLOCAL(clientLOCALAddress,clientLocal_fd);
+            //    communicationLOCAL(clientLOCALAdress,clientLocal_fd);
+/*
+                    bzero((struct sockaddr_un *)&clientLOCALAddress,sizeof(clientLOCALAddress));
+                //Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
+                int bytesRead = read(client_fd,(struct sockaddr_un *)&clientLOCALAddress, sizeof(clientLOCALAddress));
+                if(bytesRead < 0)
+                {
+                    perror("communicationINET read failed");
+                }
+                printf("CZYTAM %d\n",clientLOCALAddress.sun_family);*/
             }
             
         }

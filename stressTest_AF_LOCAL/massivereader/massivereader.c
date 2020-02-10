@@ -60,7 +60,7 @@ void createServerINET()
 		exit(EXIT_FAILURE);
 	}	
 
-	//socketToNonblockingMode(server_fd);
+	socketToNonblockingMode(server_fd);
 
     if (listen(server_fd, 5) < 0) 
 	{ 
@@ -77,7 +77,7 @@ void acceptResponseINET()
 	if( (client_fd = accept( server_fd,(struct sockaddr *)&clientINETAddress,
 			(socklen_t*)&clientINETAddressLength)) != -1)
 	{
-		//socketToNonblockingMode(client_fd);
+		socketToNonblockingMode(client_fd);
 		//SET EPOLL
 		struct epoll_event event;
 		event.data.fd = client_fd;
@@ -99,49 +99,45 @@ void acceptResponseINET()
 
 }
 //------------------------------------------------------------------------
-void communicationINET(struct sockaddr_un *clientLOCALAdress, int *clientLocal_fd )
+void communicationINET(struct sockaddr_un *clientLOCALAddress )
 { 
-	struct timespec tim;
-	tim.tv_nsec=0;
-	tim.tv_sec=1;
 
-//	while(1)
-	//{
-	
-		bzero((struct sockaddr_un *)clientLOCALAdress,sizeof(*clientLOCALAdress));
+		bzero((struct sockaddr_un *)clientLOCALAddress,sizeof(*clientLOCALAddress));
 		//Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
-        int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress));
+        int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAddress, sizeof(*clientLOCALAddress));
         if(bytesRead < 0)
         {
             perror("communicationINET read failed");
         }
-		printf("CZYTAM %d\n",clientLOCALAdress->sun_family);
-		createClientLOCAL(clientLOCALAdress,clientLocal_fd);
+		printf("CZYTAM %d\n",clientLOCALAddress->sun_family);
 		//odsyla strukture do multiwriter
-		if( write(client_fd, (struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
+	/*	if( write(client_fd, (struct sockaddr_un *)clientLOCALAdress, sizeof(clientLOCALAdress)) == -1)
 		{
 			perror("createClientLOCAL write failed"); 
 			exit(EXIT_FAILURE); 
 		}
-		nanosleep(&tim,0);
+		nanosleep(&tim,0);*/
 		
 	//}
 }
 //----------------------------------------------------------------------------
-void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
+void createClientLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 {
-	*clientLocal_fd =  socket(AF_LOCAL, SOCK_STREAM, 0);
-	if( *clientLocal_fd == -1 )
+	clientLocal_fd =  socket(AF_LOCAL, SOCK_STREAM, 0);
+	if( clientLocal_fd == -1 )
 	{
 	    perror("createClientLOCAL Socket failed"); 
 		exit(EXIT_FAILURE); 
 	}
-	printf("Local serwer %d",clientAddress->sun_family);
-	if( connect( *clientLocal_fd, (struct sockaddr *)clientAddress, sizeof(clientAddress) ) < 0)
+	printf("Local serwer %d",clientAddress.sun_family);
+	if( connect( clientLocal_fd, (struct sockaddr *)&clientAddress, sizeof(clientAddress) ) < 0)
     {
-        clientAddress->sun_family = -1;
+        clientAddress.sun_family = -1;
 		perror("createClientLOCAL Can't connect to local serwer");
     }
+	else {
+		printf("Connected to local server\n");
+	}
 }
 //--------------------------------------------------------------------------------
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)

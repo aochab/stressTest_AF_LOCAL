@@ -3,23 +3,37 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
+#include <fcntl.h>
 
+#include <sys/epoll.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #define UNIX_PATH_MAX 108
+#define EVENTSMAX 50
+
+int portNr;
+int numOfConnectionLOCAL;
+float timeIntervalBeetwenMsg; //mikrosec 10^-6
+float timeTotalWork; //centosekunda 10^-2
 
 int server_fd;
 int client_fd;
-//int clientLOCAL_fd;
-//int serverLocal_fd;
+int localsFds[10];
+int acceptedConnectionsLOCAL;
+
+int epoll_fd;
+struct epoll_event eventServer, eventClientINET, *events;
 
 //FUNCTIONS
+void getParameters(int argc, char* argv[]);
+void socketToNonblockingMode(int socked_fd);
 void createClientINET();
 void communicationINET(int *serverLocal_fd, int *clientLocal_fd);
-void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int *serverLocal_fd);
-void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd);
+void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd);
+void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress);
 
 void communicationLOCAL(int clientLOCAL_fd);

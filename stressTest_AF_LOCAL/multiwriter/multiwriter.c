@@ -1,5 +1,56 @@
 #include "multiwriter.h"
 
+void getParameters(int argc, char* argv[])
+{
+    int opt;
+    
+    while ((opt = getopt(argc, argv,"S:p:d:T:")) != -1)
+    {
+        switch(opt) 
+        {
+			case 'S':
+            {
+                numOfConnectionLOCAL = strtol(optarg,NULL,10);
+                break;
+            }
+            case 'p':
+            {
+                portNr = strtol(optarg,NULL,10);
+                break;
+            }
+			case 'd':
+            {
+                timeIntervalBeetwenMsg = strtof(optarg,NULL);
+                break;
+            }
+			case 'T':
+            {
+                timeTotalWork = strtof(optarg,NULL);
+                break;
+            }
+            default:
+                printf("Wrong argument - exit program\n");
+                exit(EXIT_FAILURE);
+        }
+    } 
+}
+//-----------------------------------------------------------------------------
+void socketToNonblockingMode(int socked_fd)
+{
+	//Change server socket fd to nonblock mode
+	int socketFlags = fcntl(socked_fd, F_GETFL,0);
+	if( socketFlags == -1 ) 
+	{
+		perror("socketToNonblockingMode fcntl getflags");
+		exit(EXIT_FAILURE);
+	}
+	if( fcntl(socked_fd,F_SETFL,socketFlags|O_NONBLOCK) == -1)
+	{
+		perror("socketToNonblockingMode fcntl setflags");
+		exit(EXIT_FAILURE);
+	}
+}
+//--------------------------------------------------------
 void createClientINET()
 {
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -29,9 +80,13 @@ void communicationINET(int *serverLocal_fd, int *clientLocal_fd)
 	struct sockaddr_un response;
 	//while(1)
 	//{
-	createSerwerLOCAL(&serverLOCALAdress,serverLocal_fd);
-	write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
-	acceptResponseLOCAL(*serverLocal_fd,clientLocal_fd);
+//	createSerwerLOCAL(&serverLOCALAdress,serverLocal_fd);
+	for(int i=0;i<numOfConnectionLOCAL;i++)
+	{
+		write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
+	}
+	
+//	acceptResponseLOCAL(*serverLocal_fd,clientLocal_fd);
 
 	memset(&response,0, sizeof(struct sockaddr_un));
 	read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
@@ -41,47 +96,66 @@ void communicationINET(int *serverLocal_fd, int *clientLocal_fd)
 
 }
 //-------------------------------------------------------------------------------
-void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_fd)
-{
+void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd)
+{//POPRAWNE
 	//Linux Abstract socket namespace
-	memset(serverLOCALAdress,0, sizeof(struct sockaddr_un));
-	serverLOCALAdress->sun_family = AF_LOCAL;
-	strncpy(&serverLOCALAdress->sun_path[1],"xyz",sizeof(serverLOCALAdress->sun_path)-2);
+	memset(mainServerLOCALAddress,0, sizeof(struct sockaddr_un));
+	mainServerLOCALAddress->sun_family = AF_LOCAL;
+	//Create random adress
+	int pathLength = sizeof(*mainServerLOCALAddress)-2;
+	char* address = (char*)calloc(pathLength,sizeof(char));
+	for(int i=0; i<pathLength; i++)
+	{
+		address[i] = rand();
+	}
+	strncpy(&mainServerLOCALAddress->sun_path[1],address,pathLength);
 
-	*serverLocal_fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-	if( *serverLocal_fd == -1 )
+	*mainServerLocal_fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+	if( *mainServerLocal_fd == -1 )
 	{
 	    perror("createSerwerLOCAL Socket failed");
 		exit(EXIT_FAILURE); 
 	}
 
-	if(bind( *serverLocal_fd, (struct sockaddr *)serverLOCALAdress, sizeof(serverLOCALAdress)) < 0 ) 
+	if(bind( *mainServerLocal_fd, (struct sockaddr *)mainServerLOCALAddress, sizeof(*mainServerLOCALAddress)) < 0 ) 
 	{
 		perror("createSerwerLOCAL bind failed"); 
 		exit(EXIT_FAILURE);
 	}
 
-	if (listen(*serverLocal_fd, 5) < 0) 
+	if (listen(*mainServerLocal_fd, 5) < 0) 
 	{ 
 	    perror("createServer listen failed"); 
 	    exit(EXIT_FAILURE); 
 	} 
 }
 //-----------------------------------------------------------------------------------
-void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd)
+void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress)
 {
-	struct sockaddr_in clientLOCALAddress;
     int clientLOCALAddressLength = sizeof(clientLOCALAddress);
 
-	*clientLOCAL_fd = accept(
-			serverLocal_fd,
-			(struct sockaddr *)&clientLOCALAddress,
-			(socklen_t*)&clientLOCALAddressLength);
-
-	if(*clientLOCAL_fd<0)
+	if( (*clientLOCAL_fd = accept(serverLocal_fd,(struct sockaddr *)&clientLOCALAddress,
+			(socklen_t*)&clientLOCALAddressLength)) != -1)
 	{
-		perror("createResponseLOCAL accept failed"); 
-		exit(EXIT_FAILURE); 
+		struct epoll_event event;
+		event.data.fd = *clientLOCAL_fd;
+		event.events = EPOLLIN | EPOLLET;
+		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,*clientLOCAL_fd,&event)==-1)
+		{
+			perror("acceptResponseINET epoll_ctl");
+			exit(EXIT_FAILURE);
+		}
+		//Save witch connections are succesfull
+		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
+		acceptedConnectionsLOCAL++;
+	}
+	else
+	{
+		if( (errno != EAGAIN) && (errno != EWOULDBLOCK))
+		{
+			perror("createResponseLOCAL  accept failed"); 
+			exit(EXIT_FAILURE); 
+		}
 	}
 }
 //---------------------------------------------------------------------------------
