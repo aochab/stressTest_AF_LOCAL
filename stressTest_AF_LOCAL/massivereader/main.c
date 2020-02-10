@@ -8,9 +8,9 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    getParameters(argc,argv);
-    createServerINET();
-    createClientResponseINET();
+  //  getParameters(argc,argv);
+  //  createServerINET();
+  //  createResponseINET();
     communicationINET(client_fd);
 
 

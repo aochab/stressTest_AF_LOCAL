@@ -9,11 +9,15 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#define UNIX_PATH_MAX 108
 
 int server_fd;
 int client_fd;
+int clientLOCAL_fd;
+int serverLocal_fd;
 
 //FUNCTIONS
 void createClientINET();
 void communicationINET(int socket_fd);
-void createSerwerLOCAL();
+void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int *serverLocal_fd);
+void createResponseLOCAL();

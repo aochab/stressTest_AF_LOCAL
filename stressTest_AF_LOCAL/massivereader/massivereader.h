@@ -10,6 +10,7 @@
 #include <sys/epoll.h>
 #include <sys/un.h>
 
+#define UNIX_PATH_MAX 108
 
 int portNr;
 char* prefix;
@@ -20,6 +21,9 @@ int epoll_fd;
 
 //FUNCTIONS
 void getParameters(int argc, char* argv[]);
+
 void createServerINET();
-void createClientResponseINET();
+void createResponseINET();
 void communicationINET(int socket_fd);
+
+void createClientLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
