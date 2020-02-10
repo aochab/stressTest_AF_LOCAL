@@ -8,11 +8,10 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-  //  getParameters(argc,argv);
-  //  createServerINET();
-  //  createResponseINET();
-    communicationINET(client_fd);
-
+    getParameters(argc,argv);
+    createServerINET();
+    acceptResponseINET();
+    communicationINET();
 
  ///   printf("Port %d prefix %s",portNr,prefix);
     close(server_fd);

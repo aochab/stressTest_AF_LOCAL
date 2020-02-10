@@ -26,37 +26,19 @@ void createClientINET()
 void communicationINET(int socket_fd)
 {
 	struct sockaddr_un serverLOCALAdress;
-	//int serverLocal_fd;
-
+	int serverLocal_fd;
+	struct sockaddr_un response;
 	//while(1)
-//	{
+	//{
 		createSerwerLOCAL(&serverLOCALAdress,&serverLocal_fd);
-	//	bzero((struct sockaddr_un *)&clientLOCALAdress,sizeof(clientLOCALAdress));
-	//	clientLOCALAdress.sun_family = 123;
-	//	write(socket_fd, (struct sockaddr_un *)&clientLOCALAdress, sizeof(clientLOCALAdress));
+		write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
+		acceptResponseLOCAL(serverLocal_fd);
+
+		memset(&response,0, sizeof(struct sockaddr_un));
+		read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
+		printf("From serwer : %d\n",response.sun_family);
 	//}
 
-/*
-	char buff[255];
-	int n;
-	while(1)
-	{
-		bzero(buff,sizeof(buff));
-		printf("Enter string : ");
-        n=0;
-		while((buff[n++] = getchar()) != '\n')
-			;
-		
-		write(socket_fd, buff, sizeof(buff));
-        bzero( buff, sizeof(buff));
-        read(socket_fd, buff, sizeof(buff));
-        printf("From server : %s",buff);
-		if(strncmp("exit",buff,4) == 0 ) 
-		{
-			printf("Server exit\n");
-			break;
-		}
-	}*/
 }
 //-------------------------------------------------------------------------------
 void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_fd)
@@ -64,7 +46,7 @@ void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_f
 	//Linux Abstract socket namespace
 	memset(serverLOCALAdress,0, sizeof(struct sockaddr_un));
 	serverLOCALAdress->sun_family = AF_LOCAL;
-	strncpy(&serverLOCALAdress->sun_path[1],"xyz",sizeof(serverLOCALAdress->sun_path)-1);
+	strncpy(&serverLOCALAdress->sun_path[1],"xyz",sizeof(serverLOCALAdress->sun_path)-2);
 
 	*serverLocal_fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if( *serverLocal_fd == -1 )
@@ -77,16 +59,14 @@ void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_f
 	{
 		perror("createSerwerLOCAL bind failed"); 
 		exit(EXIT_FAILURE);
-	}	
+	}
 
 	if (listen(*serverLocal_fd, 5) < 0) 
 	{ 
 	    perror("createServer listen failed"); 
 	    exit(EXIT_FAILURE); 
 	} 
-
-	createResponseLOCAL();
-
+/*
 	char buff[255];
 	int n;
 	while(1)
@@ -107,13 +87,14 @@ void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int* serverLocal_f
 			printf("Server exit\n");
 			break;
 		}
-	}
+	}*/
 }
 //-----------------------------------------------------------------------------------
-void createResponseLOCAL()
+void acceptResponseLOCAL(int serverLocal_fd)
 {
 	struct sockaddr_in clientLOCALAddress;
     int clientLOCALAddressLength = sizeof(clientLOCALAddress);
+	
 
 	clientLOCAL_fd = accept(
 			serverLocal_fd,

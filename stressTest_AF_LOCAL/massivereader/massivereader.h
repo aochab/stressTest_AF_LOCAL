@@ -23,7 +23,7 @@ int epoll_fd;
 void getParameters(int argc, char* argv[]);
 
 void createServerINET();
-void createResponseINET();
-void communicationINET(int socket_fd);
+void acceptResponseINET();
+void communicationINET();
 
-void createClientLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
+void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);

@@ -14,10 +14,10 @@
 int server_fd;
 int client_fd;
 int clientLOCAL_fd;
-int serverLocal_fd;
+//int serverLocal_fd;
 
 //FUNCTIONS
 void createClientINET();
-void communicationINET(int socket_fd);
+void communicationINET();
 void createSerwerLOCAL(struct sockaddr_un *serverLOCALAdress, int *serverLocal_fd);
-void createResponseLOCAL();
+void acceptResponseLOCAL(int serverLocal_fd);

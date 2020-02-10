@@ -2,9 +2,8 @@
 
 int main(int argc, char* argv[])
 {
-  //  createClientINET();
-    communicationINET(client_fd);
-
+    createClientINET();
+    communicationINET();
 
     printf("multiwriter");
     close(client_fd);
