@@ -110,7 +110,6 @@ int getResponseINET(struct sockaddr_un *clientLOCALAddress )
         {
 			return -1;
         }
-		printf("CZYTAM %d\n",clientLOCALAddress->sun_family);
 		break;
 	}
 	return 0;
@@ -172,5 +171,5 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
     {
             perror("communicationLOCAL read failed");
     }
-	printf("From local %s:",buff);
+	printf("From local :  %s",buff);
 }

@@ -41,9 +41,7 @@ int main(int argc, char* argv[])
     while(1)
     {
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
-       // if(numReady != 1) break;
 
-        printf("NUMREADY %d\n",numReady);
         for( int i=0; i < numReady; i++)
         {
             if( events[i].events & EPOLLERR || 
@@ -67,7 +65,6 @@ int main(int argc, char* argv[])
                 {
                     struct sockaddr_un clientLOCALAddress;
                     int clientLocal_fd;
-                   // printf("Communication inet\n");
                     if( getResponseINET(&clientLOCALAddress) == -1)
                     {
                         close(server_fd);
@@ -83,18 +80,14 @@ int main(int argc, char* argv[])
 
             for(int j=0; j<numOfLocalClients; j++)
             {
-                printf("%d \n",localClientFds[j]);
                 if (events[i].data.fd == localClientFds[j])
                 {
-                    printf("Mam");
+                    communicationLOCAL(localClientsAdresses[j],localClientFds[j]);
                 }
             }
         }
     }
 
-
-
- ///   printf("Port %d prefix %s",portNr,prefix);
 
     free(prefix);
     exit(EXIT_SUCCESS);

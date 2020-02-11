@@ -14,6 +14,7 @@
 
 #define UNIX_PATH_MAX 108
 #define EVENTSMAX 50
+#define LOCAL_SERVER_MAX 100
 
 int portNr;
 int numOfConnectionLOCAL;
@@ -21,7 +22,7 @@ float timeIntervalBeetwenMsg; //mikrosec 10^-6
 float timeTotalWork; //centosekunda 10^-2
 
 int client_fd;
-int localsFds[10];
+int localsFds[LOCAL_SERVER_MAX];
 int acceptedConnectionsLOCAL;
 int receivedAnswersFromINET;
 int numOfAcceptedConnectionINMultireader;

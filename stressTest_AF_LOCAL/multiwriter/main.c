@@ -106,8 +106,17 @@ int main(int argc, char* argv[])
         }
     }
     printf("\n\n===================== SEND MESSAGES =====================\n\n");
-    time.tv_sec=10;
-nanosleep(&time,0);
+
+    while(1)
+    {
+        for(int i=0;i<acceptedConnectionsLOCAL;i++)
+        {
+            nanosleep(&time,0);
+            communicationLOCAL(localsFds[i]);
+        }
+    }
+
+
 
  
     exit(EXIT_SUCCESS);

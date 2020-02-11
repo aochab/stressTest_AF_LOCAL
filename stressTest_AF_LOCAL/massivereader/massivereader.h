@@ -14,6 +14,7 @@
 
 #define UNIX_PATH_MAX 108
 #define EVENTSMAX 50
+#define LOCAL_CLIENT_MAX 100
 
 int portNr;
 char* prefix;
@@ -21,8 +22,8 @@ char* prefix;
 int server_fd;
 int client_fd;
 
-int localClientFds[10];
-struct sockaddr_un localClientsAdresses[10];
+int localClientFds[LOCAL_CLIENT_MAX];
+struct sockaddr_un localClientsAdresses[LOCAL_CLIENT_MAX];
 int numOfLocalClients;
 
 int epoll_fd;
