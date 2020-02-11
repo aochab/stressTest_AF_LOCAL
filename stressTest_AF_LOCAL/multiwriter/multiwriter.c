@@ -74,26 +74,25 @@ void createClientINET()
 	
 }
 //------------------------------------------------------------------------------
-void communicationINET(int *serverLocal_fd, int *clientLocal_fd)
+void getResponseFromINET()
 {
-	struct sockaddr_un serverLOCALAdress;
 	struct sockaddr_un response;
-	//while(1)
-	//{
-//	createSerwerLOCAL(&serverLOCALAdress,serverLocal_fd);
-	for(int i=0;i<numOfConnectionLOCAL;i++)
-	{
-		write(client_fd, (struct sockaddr_un *)&serverLOCALAdress, sizeof(serverLOCALAdress));
-	}
-	
-//	acceptResponseLOCAL(*serverLocal_fd,clientLocal_fd);
 
 	memset(&response,0, sizeof(struct sockaddr_un));
-	read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
-	printf("From serwer : %d\n",response.sun_family);
-		
-	//}
-
+	if(read(client_fd, (struct sockaddr_un *)&response, sizeof(response)) != sizeof(struct sockaddr_un))
+	{
+		perror("getResponseFromINET failed");
+	}
+	else 
+	{
+		receivedAnswersFromINET++;
+		if( response.sun_family == AF_LOCAL ) 
+		{
+			numOfAcceptedConnectionINMultireader++;
+		}
+		printf("From serwer : %d\n",response.sun_family);
+	}
+	
 }
 //-------------------------------------------------------------------------------
 void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd)
@@ -151,16 +150,9 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 		//Save witch connections are succesfull
 		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
 		acceptedConnectionsLOCAL++;
-		receivedConnectionsLOCAL++;
-		for(int j=0;j<acceptedConnectionsLOCAL;j++)
-                {
-                    printf("num of %d, desk %d\n",acceptedConnectionsLOCAL,localsFds[j]);
-                }
-		
 	}
 	else
 	{
-		receivedConnectionsLOCAL++;
 		if( (errno != EAGAIN) && (errno != EWOULDBLOCK))
 		{
 			perror("createResponseLOCAL  accept failed"); 

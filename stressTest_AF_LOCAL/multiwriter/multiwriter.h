@@ -23,7 +23,8 @@ float timeTotalWork; //centosekunda 10^-2
 int client_fd;
 int localsFds[10];
 int acceptedConnectionsLOCAL;
-int receivedConnectionsLOCAL;
+int receivedAnswersFromINET;
+int numOfAcceptedConnectionINMultireader;
 
 int epoll_fd;
 struct epoll_event eventServer, eventClientINET, *events;
@@ -32,7 +33,7 @@ struct epoll_event eventServer, eventClientINET, *events;
 void getParameters(int argc, char* argv[]);
 void socketToNonblockingMode(int socked_fd);
 void createClientINET();
-void communicationINET(int *serverLocal_fd, int *clientLocal_fd);
+void getResponseFromINET();
 void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd);
 void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress);
 

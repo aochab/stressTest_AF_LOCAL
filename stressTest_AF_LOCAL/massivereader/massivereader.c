@@ -143,8 +143,11 @@ void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 	printf("Send %d \n",clientLOCALAddress.sun_family);
 	if( write(client_fd, (struct sockaddr_un *)&clientLOCALAddress, sizeof(clientLOCALAddress)) == -1)
 	{
-		perror("createClientLOCAL write failed"); 
-		exit(EXIT_FAILURE); 
+		if( errno != ECONNRESET )
+		{
+			perror("createClientLOCAL write failed "); 
+			exit(EXIT_FAILURE); 
+		}	
 	}
 }
 //--------------------------------------------------------------------------------
