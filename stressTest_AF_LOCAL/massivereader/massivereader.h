@@ -15,6 +15,7 @@
 #define UNIX_PATH_MAX 108
 #define EVENTSMAX 50
 #define LOCAL_CLIENT_MAX 100
+#define TEXT_TIME_REPRESENATION 20
 
 int portNr;
 char* prefix;
@@ -30,8 +31,8 @@ int epoll_fd;
 struct epoll_event eventServer, *events;
 
 typedef struct message {
-    char textTime[19];
-    char socketPath[108];
+    char textTime[TEXT_TIME_REPRESENATION];
+    char socketPath[UNIX_PATH_MAX];
     struct timespec time;
 } Message;
 

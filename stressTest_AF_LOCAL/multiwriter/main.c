@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
         perror("ATEXIT error");
         exit(EXIT_FAILURE);
     }
-
+    
     getParameters(argc,argv);
 
     //Convert units from parameters
@@ -128,6 +128,12 @@ int main(int argc, char* argv[])
     printf("\n\n===================== SEND MESSAGES =====================\n\n");
 
     setTimer();
+    
+    if(clock_gettime(CLOCK_REALTIME,&startSendMessagesTime) == -1) 
+    {
+        perror("clock_getime startSendMessagesTime");
+        exit(EXIT_FAILURE);
+    }
 
     while(1)
     {

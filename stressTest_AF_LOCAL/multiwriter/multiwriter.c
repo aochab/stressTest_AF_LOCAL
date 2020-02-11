@@ -229,19 +229,83 @@ void sendMessage(struct sockaddr_un mainServerLOCALAddress)
 {
         int i = rand()%acceptedConnectionsLOCAL; //random socket
         nanosleep(&timeIntervalBeetwenMsgConverted,0);
-		
-        struct timespec sendTime; sendTime.tv_nsec=1;sendTime.tv_sec=125; 
+        
         Message msg;
+
+        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
+        makeTextualRepresentationOfTime(textTime,startSendMessagesTime);
+        printf("%s\n",textTime);
+        strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION);
+
+        struct timespec sendTime; 
+        sendTime.tv_nsec=1;
+        sendTime.tv_sec=125; 
         msg.time = sendTime;
+
         memset(&msg.socketPath,0,sizeof(msg.socketPath));
         strncpy(msg.socketPath,mainServerLOCALAddress.sun_path,sizeof(mainServerLOCALAddress.sun_path));
-        printf( "pathsiz %d \n",sizeof(mainServerLOCALAddress.sun_path));
-        memset(&msg.textTime,0,sizeof(msg.textTime));
-        strncpy(&msg.textTime,"123",3);
-        printf("time %s text %s\n",msg.textTime,msg.socketPath);
+        
         write(localsFds[i],&msg,sizeof(Message));
 }
+//----------------------------------------------------------------------------
+void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
+{
+    long nSec = timeStruct.tv_nsec;
+    int sec;
+    int minutes;
+    if(timeStruct.tv_sec<60)
+    {
+        sec = timeStruct.tv_sec;
+        minutes = 0;
+    }
+    else
+    {
+        sec = timeStruct.tv_sec%60; 
+        minutes = (timeStruct.tv_sec%3600)/60;
+    }
 
+    if(minutes>99)
+    {
+        exit(EXIT_FAILURE);
+    }
+    if(minutes>9)
+    {
+        textTime[0]=(char)48;
+        textTime[1]=(char)(minutes/10) + (char)48;
+        textTime[2]=(char)(minutes%10) + (char)48;
+    }
+    else
+    {
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)(minutes%10)+ (char)48;
+    }
+    textTime[3]='*'; textTime[4]=':';
+    if(sec>9)
+    {
+        textTime[5]=(char)(sec/10) + (char)48;
+        textTime[6]=(char)(sec%10) + (char)48;
+    }
+    else
+    {
+        textTime[5]=(char)48;
+        textTime[6]=(char)(sec%10) + (char)48;
+    }
+    textTime[7]=',';
+    textTime[8]=(char)((nSec/100000000)%10) + (char)48;
+    textTime[9]=(char)((nSec/10000000)%10) + (char)48;
+    textTime[10]='.';
+    textTime[11]=(char)((nSec/1000000)%10) + (char)48;
+    textTime[12]=(char)((nSec/100000)%10) + (char)48;
+    textTime[13]='.';
+    textTime[14]=(char)((nSec/10000)%10) + (char)48;
+    textTime[15]=(char)((nSec/1000)%10) + (char)48;
+    textTime[16]='.';
+    textTime[17]=(char)((nSec/100)%10) + (char)48;
+    textTime[18]=(char)((nSec/10)%10) + (char)48;
+    textTime[19]=(char)(nSec%10) + (char)48;
+    textTime[20]='\0';
+}
 //--------------------------------------------------------------------------
 void setTimer()
 {
@@ -284,12 +348,18 @@ void setTimer()
 //-----------------------------------------------------------------------
 void signalHandler(int sig)
 {
+	if(clock_gettime(CLOCK_REALTIME,&stopSendMessagesTime) == -1) 
+    {
+        perror("clock_getime stopSendMessagesTime");
+        exit(EXIT_FAILURE);
+    }
     exit(EXIT_SUCCESS);
 }
 //---------------------------------------------------
 void exitFunction(void)
 {
-    printf("koniec");
+    printf("TIME start sec %ld nsec %ld\n",startSendMessagesTime.tv_sec,startSendMessagesTime.tv_nsec);
+	printf("TIME stop sec %ld nsec %ld\n",stopSendMessagesTime.tv_sec,stopSendMessagesTime.tv_nsec);
 	//wypisac info zawierajace sumaryczny czas wysykanua komunikatow
 	//oraz minimalne i maksymalne odstep nadchodzacego cyklu
 }

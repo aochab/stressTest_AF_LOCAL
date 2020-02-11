@@ -187,6 +187,5 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	{ 
 		printf("Socket verified negative\n"); 
 	}
-    printf("time %s text %s timespec s %ld ns %ld\n",msg.textTime,msg.socketPath,
-												msg.time.tv_sec,msg.time.tv_nsec);
+    printf("time %s timespec s %ld ns %ld\n",msg.textTime,msg.time.tv_sec,msg.time.tv_nsec);
 }
