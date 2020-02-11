@@ -133,6 +133,7 @@ void createClientLOCAL(struct sockaddr_un *clientAddress, int clientLocal_fd)
 	else {
 		printf("Connected to local server\n");
 		localClientFds[numOfLocalClients] = clientLocal_fd;
+		localClientsAdresses[numOfLocalClients] = *clientAddress;
 		numOfLocalClients++;
 	}
 }

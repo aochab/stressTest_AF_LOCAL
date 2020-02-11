@@ -64,7 +64,7 @@ void createClientINET()
     bzero(&clientINETAddress, sizeof(clientINETAddress));
 	clientINETAddress.sin_family = AF_INET;
 	clientINETAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-	clientINETAddress.sin_port = htons(12345);
+	clientINETAddress.sin_port = htons(portNr);
 
     if( connect( client_fd, (struct sockaddr *)&clientINETAddress, sizeof(clientINETAddress) ) < 0)
     {
@@ -139,14 +139,14 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 			(socklen_t*)&clientLOCALAddressLength)) != -1)
 	{
 		socketToNonblockingMode(*clientLOCAL_fd);
-		struct epoll_event event;
+	/*	struct epoll_event event;
 		event.data.fd = *clientLOCAL_fd;
 		event.events = EPOLLIN | EPOLLET;
 		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,*clientLOCAL_fd,&event)==-1)
 		{
 			perror("acceptResponseINET epoll_ctl");
 			exit(EXIT_FAILURE);
-		}
+		}*/
 		//Save witch connections are succesfull
 		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
 		acceptedConnectionsLOCAL++;

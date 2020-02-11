@@ -12,7 +12,9 @@ int main(int argc, char* argv[])
     numOfLocalClients=0;
     createServerINET();
 
-    struct timespec time; time.tv_sec=1;time.tv_nsec=0;
+    struct timespec time; 
+    time.tv_sec=1;
+    time.tv_nsec=0;
 
     epoll_fd = epoll_create1(0);
     if( epoll_fd == -1 )
@@ -21,7 +23,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
     
-
     eventServer.data.fd = server_fd;
     eventServer.events = EPOLLIN | EPOLLET;
     if( epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &eventServer) == -1)
@@ -30,7 +31,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    events = calloc(EVENTSMAX, sizeof(struct epoll_event));
+    events = calloc(EVENTSMAX, sizeof(events));
     if( events == NULL) 
     {
         perror("Calloc events error main");
@@ -40,6 +41,7 @@ int main(int argc, char* argv[])
     while(1)
     {
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
+        
         for( int i=0; i < numReady; i++)
         {
             if( events[i].events & EPOLLERR || 
@@ -49,6 +51,7 @@ int main(int argc, char* argv[])
                 perror("Epoll main error");
                 close(events[i].data.fd);
             }
+            printf("NUMREADY %d\n");
             if (events[i].data.fd == server_fd)
             {
                 //Set new socket
@@ -66,6 +69,7 @@ int main(int argc, char* argv[])
                    // printf("Communication inet\n");
                     getResponseINET(&clientLOCALAddress);
                     createClientLOCAL(&clientLOCALAddress,clientLocal_fd);
+                    nanosleep(&time,0);
                     sendInfoToINET(clientLOCALAddress);
                     nanosleep(&time,0);
                 }

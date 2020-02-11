@@ -16,7 +16,6 @@ int main(int argc, char* argv[])
     //Create main socket Local stream
     struct sockaddr_un mainServerLOCALAddress;
     int mainServerLocal_fd;
-    int mainClientLocal_fd;
 
     createSerwerLOCAL(&mainServerLOCALAddress,&mainServerLocal_fd);
 
@@ -26,12 +25,7 @@ int main(int argc, char* argv[])
 	{
 		write(client_fd, (struct sockaddr_un *)&mainServerLOCALAddress, sizeof(mainServerLOCALAddress));
 	}
-    
 
-    
-   // nanosleep(&time,0);
-    //communicationINET(&mainServerLocal_fd,&mainClientLocal_fd);
-   // communicationLOCAL(mainClientLocal_fd);
     
     //EPOLL
     
@@ -60,7 +54,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    events = calloc(EVENTSMAX, sizeof(struct epoll_event));
+    events = calloc(EVENTSMAX, sizeof(events));
     if( events == NULL) 
     {
         perror("Calloc events error main");
@@ -69,14 +63,27 @@ int main(int argc, char* argv[])
 
     while(1)
     {
+        if(receivedAnswersFromINET == numOfConnectionLOCAL)
+        {
+            unlink(mainServerLOCALAddress.sun_path);
+            close(client_fd);
+            close(mainServerLocal_fd);
+            break;
+        }
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
+        if(numReady == -1)
+        {
+            perror("Epoll_wait main");
+            exit(EXIT_FAILURE);
+        }
+
         for( int i=0; i < numReady; i++)
         {
             if( events[i].events & EPOLLERR || 
                 events[i].events & EPOLLHUP || 
                 !(events[i].events & EPOLLIN))
             {
-                perror("Epoll main error");
+                perror("Epoll main");
                 close(events[i].data.fd);
             }
             //Accept connection to LOCAL
@@ -85,38 +92,20 @@ int main(int argc, char* argv[])
                 //Set new socket
                 int clientLocal_fd;
                 acceptResponseLOCAL(mainServerLocal_fd,&clientLocal_fd,mainServerLOCALAddress);
-                printf("Accept response from multireader\n");
-        
-            }
-            else
-            {
-                printf("gotowy local\n");
+                printf("Accept response from multireader - connected to LOCAl\n");
             }
 
-            //INET respones about connection with local
             if (events[i].data.fd == client_fd)
             {
-                //
-            }
-            else
-            {
+                //INET respones about connection with local
+                printf("Get response from INET\n");
                 getResponseFromINET();
-                if(receivedAnswersFromINET == numOfConnectionLOCAL )
-                {
-                    //Close INET Communication and main LOCAL socket
-                    close(client_fd);
-                    close(mainServerLocal_fd);
-                    close(mainClientLocal_fd);
-                    unlink(mainServerLOCALAddress.sun_path);
-                    //Time for send messages by LOCAL sockets
-                }
-            }
+            }  
         }
     }
+    printf("\n\n===================== SEND MESSAGES =====================\n\n");
 
 
-    
-    //1close(client_fd);
  
     exit(EXIT_SUCCESS);
 }

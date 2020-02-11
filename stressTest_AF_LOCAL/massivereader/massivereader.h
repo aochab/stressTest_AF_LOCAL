@@ -22,6 +22,7 @@ int server_fd;
 int client_fd;
 
 int localClientFds[10];
+struct sockaddr_un localClientsAdresses[10];
 int numOfLocalClients;
 
 int epoll_fd;
