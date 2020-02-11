@@ -5,6 +5,7 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include <sys/epoll.h>
 #include <netinet/in.h>
@@ -20,6 +21,9 @@ int portNr;
 int numOfConnectionLOCAL;
 float timeIntervalBeetwenMsg; //mikrosec 10^-6
 float timeTotalWork; //centosekunda 10^-2
+
+struct timespec timeIntervalBeetwenMsgConverted;
+struct timespec timeTotalWorkConvertConverted;
 
 int client_fd;
 int localsFds[LOCAL_SERVER_MAX];
@@ -39,3 +43,6 @@ void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServ
 void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress);
 
 void communicationLOCAL(int clientLOCAL_fd);
+
+void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int *outSec, int *outNsec);
+void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outNsec);

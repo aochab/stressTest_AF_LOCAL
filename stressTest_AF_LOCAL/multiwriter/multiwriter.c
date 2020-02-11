@@ -173,3 +173,67 @@ void communicationLOCAL(int clientLOCAL_fd)
 		
 		write(clientLOCAL_fd, buff, sizeof(buff));
 }
+//-----------------------------------------------------------------------------------
+void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int* outSec, int *outNsec)
+{
+	float integerPart;
+	float decimalPart = modff(inputMicroSec,&integerPart);
+    if(integerPart<1000000)
+    {
+        *outNsec = integerPart * 1000;
+    } 
+    else
+    {//Unit conversion microsec on sec and nsec
+        if(fmod(integerPart,1000000)!=0) 
+        { 
+            *outNsec = fmod(integerPart,1000000);
+            integerPart -= *outNsec;
+            *outNsec *= 1000;
+        }
+        int multiplier = 0;
+        while(fmod(integerPart,1000000)==0)
+        {
+            integerPart /= 1000000;
+            multiplier++;
+        }
+        multiplier--;
+        for(int i=0;i<multiplier;i++)
+        {
+            integerPart *= 1000000;
+        }
+        *outSec = integerPart;
+		*outNsec = decimalPart*1000;
+    } 
+}
+//-----------------------------------------------------------------------------------
+void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outNsec)
+{
+	float integerPart;
+	float decimalPart = modff(inputCentiSec,&integerPart);
+    if(integerPart<100)
+    {
+        *outNsec = integerPart * 10000000;
+    } 
+    else
+    {//Unit conversion ds on sec and nsec
+        if(fmod(integerPart,100)!=0) 
+        { 
+            *outNsec = fmod(integerPart,10);
+            integerPart -= *outNsec;
+            *outNsec *= 10000000;
+        }
+        int multiplier = 0;
+        while(fmod(integerPart,100)==0)
+        {
+            integerPart /= 100;
+            multiplier++;
+        }
+        multiplier--;
+        for(int i=0;i<multiplier;i++)
+        {
+            integerPart *= 100;
+        }
+        *outSec = integerPart;
+		*outNsec = decimalPart*10000000;
+    } 
+}

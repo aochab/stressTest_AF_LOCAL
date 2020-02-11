@@ -8,8 +8,22 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
     srand(time(NULL));
-    struct timespec time; time.tv_nsec=0; time.tv_sec=2;
+    struct timespec time; time.tv_nsec=0; time.tv_sec=0;
     getParameters(argc,argv);
+    //Convert units from parameters
+
+   
+    changeUnitsMicrosecToSecAndNsec(timeIntervalBeetwenMsg,
+                                    &timeIntervalBeetwenMsgConverted.tv_sec,
+                                    &timeIntervalBeetwenMsgConverted.tv_nsec);
+    printf("Beetween msg sec %ld nsec %ld\n",timeIntervalBeetwenMsgConverted.tv_sec,
+                                            timeIntervalBeetwenMsgConverted.tv_nsec);
+
+    changeUnitsCentisecToSecAndNsec(timeTotalWork,
+                                    &timeTotalWorkConvertConverted.tv_sec,
+                                    &timeTotalWorkConvertConverted.tv_nsec);
+    printf("Total work sec %ld nsec %ld\n",timeTotalWorkConvertConverted.tv_sec,
+                                            timeTotalWorkConvertConverted.tv_nsec);
     acceptedConnectionsLOCAL = 0;
     receivedAnswersFromINET = 0;
     numOfAcceptedConnectionINMultireader = 0;
