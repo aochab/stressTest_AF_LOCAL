@@ -21,6 +21,9 @@ char* prefix;
 int server_fd;
 int client_fd;
 
+int localClientFds[10];
+int numOfLocalClients;
+
 int epoll_fd;
 struct epoll_event eventServer, *events;
 
@@ -30,7 +33,8 @@ void socketToNonblockingMode(int socked_fd);
 
 void createServerINET();
 void acceptResponseINET();
-void communicationINET(struct sockaddr_un *clientLOCALAdress );
+int getResponseINET(struct sockaddr_un *clientLOCALAdress );
 
-void createClientLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
+void createClientLOCAL(struct sockaddr_un *clientAddress, int clientLocal_fd);
+void sendInfoToINET(struct sockaddr_un clientLOCALAddress);
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);

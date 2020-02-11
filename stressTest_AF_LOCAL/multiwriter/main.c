@@ -11,6 +11,7 @@ int main(int argc, char* argv[])
     struct timespec time; time.tv_nsec=0; time.tv_sec=2;
     getParameters(argc,argv);
     acceptedConnectionsLOCAL = 0;
+    receivedConnectionsLOCAL = 0;
     //Create main socket Local stream
     struct sockaddr_un mainServerLOCALAddress;
     int mainServerLocal_fd;
@@ -24,7 +25,7 @@ int main(int argc, char* argv[])
 	{
 		write(client_fd, (struct sockaddr_un *)&mainServerLOCALAddress, sizeof(mainServerLOCALAddress));
 	}
-    nanosleep(&time,0);
+    
 
     
    // nanosleep(&time,0);
@@ -37,15 +38,6 @@ int main(int argc, char* argv[])
     if( epoll_fd == -1 )
     {
         perror("Epoll_create1 main");
-        exit(EXIT_FAILURE);
-    }
-    
-    //epoll for INET
-    eventClientINET.data.fd = client_fd;
-    eventClientINET.events = EPOLLIN | EPOLLET;
-    if( epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &eventClientINET) == -1)
-    {
-        perror("Epoll_ctl main");
         exit(EXIT_FAILURE);
     }
 
@@ -77,32 +69,22 @@ int main(int argc, char* argv[])
                 perror("Epoll main error");
                 close(events[i].data.fd);
             }
-            else if (events[i].data.fd == mainServerLocal_fd)
+            if (events[i].data.fd == mainServerLocal_fd)
             {
                 //Set new socket
-                acceptResponseLOCAL(mainServerLocal_fd,&mainClientLocal_fd,mainServerLOCALAddress);
+                int clientLocal_fd;
+                acceptResponseLOCAL(mainServerLocal_fd,&clientLocal_fd,mainServerLOCALAddress);
                 printf("akceptuje local\n");
+                printf("rece %d num of con %d",receivedConnectionsLOCAL,numOfConnectionLOCAL);
+                if(receivedConnectionsLOCAL == (numOfConnectionLOCAL-1) )
+                {
+                    close(client_fd);
+                }
             }
             else
             {
                 printf("gotowy local\n");
             }
-            
-            if (events[i].data.fd == client_fd)
-            {
-                printf("jest client ==\n");
-            }
-            else
-            {
-                printf("jest client przed write\n");
-            //    write(client_fd, (struct sockaddr_un *)&mainServerLOCALAddress, sizeof(mainServerLOCALAddress));
-                struct sockaddr_un response;
-                memset(&response,0, sizeof(struct sockaddr_un));
-                printf("jest client przed read\n");
-	        //    read(client_fd, (struct sockaddr_un *)&response, sizeof(response));
-	            printf("From serwer : %d\n",response.sun_family);
-            }
-            
         }
     }
 

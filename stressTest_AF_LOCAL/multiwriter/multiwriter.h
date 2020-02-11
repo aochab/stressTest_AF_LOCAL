@@ -20,10 +20,10 @@ int numOfConnectionLOCAL;
 float timeIntervalBeetwenMsg; //mikrosec 10^-6
 float timeTotalWork; //centosekunda 10^-2
 
-int server_fd;
 int client_fd;
 int localsFds[10];
 int acceptedConnectionsLOCAL;
+int receivedConnectionsLOCAL;
 
 int epoll_fd;
 struct epoll_event eventServer, eventClientINET, *events;

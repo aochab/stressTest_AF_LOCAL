@@ -123,6 +123,8 @@ void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServ
 		exit(EXIT_FAILURE);
 	}
 
+	socketToNonblockingMode(*mainServerLocal_fd);
+
 	if (listen(*mainServerLocal_fd, 5) < 0) 
 	{ 
 	    perror("createServer listen failed"); 
@@ -137,6 +139,7 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 	if( (*clientLOCAL_fd = accept(serverLocal_fd,(struct sockaddr *)&clientLOCALAddress,
 			(socklen_t*)&clientLOCALAddressLength)) != -1)
 	{
+		socketToNonblockingMode(*clientLOCAL_fd);
 		struct epoll_event event;
 		event.data.fd = *clientLOCAL_fd;
 		event.events = EPOLLIN | EPOLLET;
@@ -148,9 +151,16 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 		//Save witch connections are succesfull
 		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
 		acceptedConnectionsLOCAL++;
+		receivedConnectionsLOCAL++;
+		for(int j=0;j<acceptedConnectionsLOCAL;j++)
+                {
+                    printf("num of %d, desk %d\n",acceptedConnectionsLOCAL,localsFds[j]);
+                }
+		
 	}
 	else
 	{
+		receivedConnectionsLOCAL++;
 		if( (errno != EAGAIN) && (errno != EWOULDBLOCK))
 		{
 			perror("createResponseLOCAL  accept failed"); 

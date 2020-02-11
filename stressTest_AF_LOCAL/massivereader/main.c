@@ -9,7 +9,10 @@ int main(int argc, char* argv[])
     }
 
     getParameters(argc,argv);
+    numOfLocalClients=0;
     createServerINET();
+
+    struct timespec time; time.tv_sec=1;time.tv_nsec=0;
 
     epoll_fd = epoll_create1(0);
     if( epoll_fd == -1 )
@@ -46,7 +49,7 @@ int main(int argc, char* argv[])
                 perror("Epoll main error");
                 close(events[i].data.fd);
             }
-            else if (events[i].data.fd == server_fd)
+            if (events[i].data.fd == server_fd)
             {
                 //Set new socket
                 printf("Accept response inet\n");
@@ -56,12 +59,18 @@ int main(int argc, char* argv[])
             {
                 //Socket is ready
                 //new LOCAL Socket
-                struct sockaddr_un clientLOCALAddress;
-                int clientLocal_fd;
-                printf("Communication inet\n");
-                communicationINET(&clientLOCALAddress);
-                printf("ATUTAJ %d",clientLOCALAddress.sun_family);
-                createClientLOCAL(clientLOCALAddress,clientLocal_fd);
+                while(1)
+                {
+                    struct sockaddr_un clientLOCALAddress;
+                    int clientLocal_fd;
+                   // printf("Communication inet\n");
+                    getResponseINET(&clientLOCALAddress);
+                    createClientLOCAL(&clientLOCALAddress,clientLocal_fd);
+                    sendInfoToINET(clientLOCALAddress);
+                    nanosleep(&time,0);
+                }
+                
+
             //    communicationLOCAL(clientLOCALAdress,clientLocal_fd);
 /*
                     bzero((struct sockaddr_un *)&clientLOCALAddress,sizeof(clientLOCALAddress));
