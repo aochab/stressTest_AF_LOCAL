@@ -41,7 +41,9 @@ int main(int argc, char* argv[])
     while(1)
     {
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
-        
+       // if(numReady != 1) break;
+
+        printf("NUMREADY %d\n",numReady);
         for( int i=0; i < numReady; i++)
         {
             if( events[i].events & EPOLLERR || 
@@ -51,7 +53,7 @@ int main(int argc, char* argv[])
                 perror("Epoll main error");
                 close(events[i].data.fd);
             }
-            printf("NUMREADY %d\n");
+           
             if (events[i].data.fd == server_fd)
             {
                 //Set new socket
@@ -60,41 +62,40 @@ int main(int argc, char* argv[])
             }
             else
             {
-                //Socket is ready
                 //new LOCAL Socket
                 while(1)
                 {
                     struct sockaddr_un clientLOCALAddress;
                     int clientLocal_fd;
                    // printf("Communication inet\n");
-                    getResponseINET(&clientLOCALAddress);
-                    createClientLOCAL(&clientLOCALAddress,clientLocal_fd);
+                    if( getResponseINET(&clientLOCALAddress) == -1)
+                    {
+                        close(server_fd);
+                        //close(client_fd);
+                        break;
+                    } 
+                    createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
                     nanosleep(&time,0);
                     sendInfoToINET(clientLOCALAddress);
                     nanosleep(&time,0);
                 }
-                
-
-            //    communicationLOCAL(clientLOCALAdress,clientLocal_fd);
-/*
-                    bzero((struct sockaddr_un *)&clientLOCALAddress,sizeof(clientLOCALAddress));
-                //Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
-                int bytesRead = read(client_fd,(struct sockaddr_un *)&clientLOCALAddress, sizeof(clientLOCALAddress));
-                if(bytesRead < 0)
-                {
-                    perror("communicationINET read failed");
-                }
-                printf("CZYTAM %d\n",clientLOCALAddress.sun_family);*/
             }
-            
+
+            for(int j=0; j<numOfLocalClients; j++)
+            {
+                printf("%d \n",localClientFds[j]);
+                if (events[i].data.fd == localClientFds[j])
+                {
+                    printf("Mam");
+                }
+            }
         }
     }
 
 
 
  ///   printf("Port %d prefix %s",portNr,prefix);
-    close(server_fd);
-    close(client_fd);
+
     free(prefix);
     exit(EXIT_SUCCESS);
 }

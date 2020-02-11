@@ -66,8 +66,10 @@ int main(int argc, char* argv[])
         if(receivedAnswersFromINET == numOfConnectionLOCAL)
         {
             unlink(mainServerLOCALAddress.sun_path);
-            close(client_fd);
-            close(mainServerLocal_fd);
+          //  close(client_fd);
+            shutdown(client_fd,SHUT_RDWR);
+            shutdown(mainServerLocal_fd,SHUT_RDWR);
+          //  close(mainServerLocal_fd);
             break;
         }
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
@@ -104,7 +106,8 @@ int main(int argc, char* argv[])
         }
     }
     printf("\n\n===================== SEND MESSAGES =====================\n\n");
-
+    time.tv_sec=10;
+nanosleep(&time,0);
 
  
     exit(EXIT_SUCCESS);

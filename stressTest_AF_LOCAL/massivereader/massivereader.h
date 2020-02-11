@@ -36,6 +36,6 @@ void createServerINET();
 void acceptResponseINET();
 int getResponseINET(struct sockaddr_un *clientLOCALAdress );
 
-void createClientLOCAL(struct sockaddr_un *clientAddress, int clientLocal_fd);
+void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);
 void sendInfoToINET(struct sockaddr_un clientLOCALAddress);
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);

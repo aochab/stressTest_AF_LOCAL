@@ -108,33 +108,43 @@ int getResponseINET(struct sockaddr_un *clientLOCALAddress )
         int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAddress, sizeof(*clientLOCALAddress));
         if( bytesRead != sizeof(struct sockaddr_un) )
         {
-		//	perror("blad ");
-			continue;
+			return -1;
         }
 		printf("CZYTAM %d\n",clientLOCALAddress->sun_family);
 		break;
 	}
-
+	return 0;
 }
 //----------------------------------------------------------------------------
-void createClientLOCAL(struct sockaddr_un *clientAddress, int clientLocal_fd)
+void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
 {
-	clientLocal_fd =  socket(AF_LOCAL, SOCK_STREAM, 0);
-	if( clientLocal_fd == -1 )
+	*clientLocal_fd =  socket(AF_LOCAL, SOCK_STREAM, 0);
+	if( *clientLocal_fd == -1 )
 	{
 	    perror("createClientLOCAL Socket failed"); 
 		exit(EXIT_FAILURE); 
 	}
-	if( connect( clientLocal_fd, (struct sockaddr *)clientAddress, sizeof(*clientAddress) ) < 0)
+	if( connect( *clientLocal_fd, (struct sockaddr *)clientAddress, sizeof(*clientAddress) ) < 0)
     {
         clientAddress->sun_family = -1;
 		perror("createClientLOCAL Can't connect to local serwer");
     }
 	else {
 		printf("Connected to local server\n");
-		localClientFds[numOfLocalClients] = clientLocal_fd;
+		localClientFds[numOfLocalClients] = *clientLocal_fd;
 		localClientsAdresses[numOfLocalClients] = *clientAddress;
 		numOfLocalClients++;
+
+		//SET EPOLL
+		socketToNonblockingMode(*clientLocal_fd);
+		struct epoll_event event;
+		event.data.fd = *clientLocal_fd;
+		event.events = EPOLLIN | EPOLLET;
+		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,*clientLocal_fd,&event)==-1)
+		{
+			perror("createClientLOCAL epoll_ctl");
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 //---------------------------------------------------------------------------------
