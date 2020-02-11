@@ -29,6 +29,12 @@ int numOfLocalClients;
 int epoll_fd;
 struct epoll_event eventServer, *events;
 
+typedef struct message {
+    char textTime[19];
+    char socketPath[108];
+    struct timespec time;
+} Message;
+
 //FUNCTIONS
 void getParameters(int argc, char* argv[]);
 void socketToNonblockingMode(int socked_fd);

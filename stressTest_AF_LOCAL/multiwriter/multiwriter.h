@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <signal.h>
 
 #include <sys/epoll.h>
 #include <netinet/in.h>
@@ -34,6 +35,12 @@ int numOfAcceptedConnectionINMultireader;
 int epoll_fd;
 struct epoll_event eventServer, eventClientINET, *events;
 
+typedef struct message {
+    char textTime[19];
+    char socketPath[108];
+    struct timespec time;
+} Message;
+
 //FUNCTIONS
 void getParameters(int argc, char* argv[]);
 void socketToNonblockingMode(int socked_fd);
@@ -42,7 +49,11 @@ void getResponseFromINET();
 void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd);
 void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress);
 
-void communicationLOCAL(int clientLOCAL_fd);
-
 void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int *outSec, int *outNsec);
 void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outNsec);
+
+void sendMessage(struct sockaddr_un mainServerLOCALAddress);
+
+void setTimer();
+void signalHandler(int sig);
+void exitFunction(void);

@@ -7,12 +7,18 @@ int main(int argc, char* argv[])
         printf("Too few arguments\n");
         exit(EXIT_FAILURE);
     }
+    
     srand(time(NULL));
-    struct timespec time; time.tv_nsec=0; time.tv_sec=0;
-    getParameters(argc,argv);
-    //Convert units from parameters
 
-   
+    if(atexit(exitFunction) != 0 )
+    {
+        perror("ATEXIT error");
+        exit(EXIT_FAILURE);
+    }
+
+    getParameters(argc,argv);
+
+    //Convert units from parameters
     changeUnitsMicrosecToSecAndNsec(timeIntervalBeetwenMsg,
                                     &timeIntervalBeetwenMsgConverted.tv_sec,
                                     &timeIntervalBeetwenMsgConverted.tv_nsec);
@@ -24,6 +30,8 @@ int main(int argc, char* argv[])
                                     &timeTotalWorkConvertConverted.tv_nsec);
     printf("Total work sec %ld nsec %ld\n",timeTotalWorkConvertConverted.tv_sec,
                                             timeTotalWorkConvertConverted.tv_nsec);
+
+    
     acceptedConnectionsLOCAL = 0;
     receivedAnswersFromINET = 0;
     numOfAcceptedConnectionINMultireader = 0;
@@ -77,13 +85,11 @@ int main(int argc, char* argv[])
 
     while(1)
     {
+        printf("ODEBRANO %d\n",receivedAnswersFromINET);
         if(receivedAnswersFromINET == numOfConnectionLOCAL)
         {
-            unlink(mainServerLOCALAddress.sun_path);
-          //  close(client_fd);
-            shutdown(client_fd,SHUT_RDWR);
-            shutdown(mainServerLocal_fd,SHUT_RDWR);
-          //  close(mainServerLocal_fd);
+            close(client_fd);
+            close(mainServerLocal_fd);
             break;
         }
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
@@ -121,17 +127,13 @@ int main(int argc, char* argv[])
     }
     printf("\n\n===================== SEND MESSAGES =====================\n\n");
 
+    setTimer();
+
     while(1)
     {
-        for(int i=0;i<acceptedConnectionsLOCAL;i++)
-        {
-            nanosleep(&time,0);
-            communicationLOCAL(localsFds[i]);
-        }
+        sendMessage(mainServerLOCALAddress);
     }
 
-
-
- 
+//TODO Monitorowac ktore sockety zostaly zamkniete w trakcie 
     exit(EXIT_SUCCESS);
 }

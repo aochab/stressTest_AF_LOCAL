@@ -164,12 +164,29 @@ void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 {
  //zrobis strukture ktora nam to odbierze te reprezentacje czasu bajtu i timesec
- char buff[255];
+ /*char buff[255];
  bzero(buff,sizeof(buff));
     int bytesRead = read(clientLocal_fd,buff, sizeof(buff));
     if(bytesRead < 0)
     {
             perror("communicationLOCAL read failed");
     }
-	printf("From local :  %s",buff);
+	printf("From local :  %s",buff);*/
+
+    Message msg;
+	int bytesRead = read(clientLocal_fd,&msg,sizeof(Message));
+	if(bytesRead != sizeof(Message))
+	{
+		perror("Read from local error");
+	}
+	if(!strcmp(clientAddress.sun_path,msg.socketPath)) 
+	{
+		printf("Socket verified correctly\n");
+	}
+	else 
+	{ 
+		printf("Socket verified negative\n"); 
+	}
+    printf("time %s text %s timespec s %ld ns %ld\n",msg.textTime,msg.socketPath,
+												msg.time.tv_sec,msg.time.tv_nsec);
 }

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -lm
+CFLAGS=-Wall -lm -lrt
 DEPS = multiwriter.h
 OBJ  = main.o multiwriter.o
 

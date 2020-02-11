@@ -13,8 +13,8 @@ int main(int argc, char* argv[])
     createServerINET();
 
     struct timespec time; 
-    time.tv_sec=1;
-    time.tv_nsec=0;
+    time.tv_sec=0;
+    time.tv_nsec=30000000;
 
     epoll_fd = epoll_create1(0);
     if( epoll_fd == -1 )
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
                         break;
                     } 
                     createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
-                    nanosleep(&time,0);
+                 //   nanosleep(&time,0);
                     sendInfoToINET(clientLOCALAddress);
                     nanosleep(&time,0);
                 }

@@ -160,19 +160,6 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 		}
 	}
 }
-//---------------------------------------------------------------------------------
-void communicationLOCAL(int clientLOCAL_fd)
-{
-	char buff[255];
-	int n;
-
-		bzero(buff,sizeof(buff));
-		n=0;
-		while((buff[n++] = getchar()) != '\n')
-			;
-		
-		write(clientLOCAL_fd, buff, sizeof(buff));
-}
 //-----------------------------------------------------------------------------------
 void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int* outSec, int *outNsec)
 {
@@ -236,4 +223,73 @@ void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outN
         *outSec = integerPart;
 		*outNsec = decimalPart*10000000;
     } 
+}
+//--------------------------------------------------------------------------------------
+void sendMessage(struct sockaddr_un mainServerLOCALAddress)
+{
+        int i = rand()%acceptedConnectionsLOCAL; //random socket
+        nanosleep(&timeIntervalBeetwenMsgConverted,0);
+		
+        struct timespec sendTime; sendTime.tv_nsec=1;sendTime.tv_sec=125; 
+        Message msg;
+        msg.time = sendTime;
+        memset(&msg.socketPath,0,sizeof(msg.socketPath));
+        strncpy(msg.socketPath,mainServerLOCALAddress.sun_path,sizeof(mainServerLOCALAddress.sun_path));
+        printf( "pathsiz %d \n",sizeof(mainServerLOCALAddress.sun_path));
+        memset(&msg.textTime,0,sizeof(msg.textTime));
+        strncpy(&msg.textTime,"123",3);
+        printf("time %s text %s\n",msg.textTime,msg.socketPath);
+        write(localsFds[i],&msg,sizeof(Message));
+}
+
+//--------------------------------------------------------------------------
+void setTimer()
+{
+    struct sigevent sevp;
+    struct sigaction sa;
+    struct itimerspec its;
+    timer_t timerid;
+
+    //handler for signal
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = signalHandler;
+
+    if(sigaction(SIGTERM,&sa,NULL) == -1) 
+    { 
+        perror("sigaction setTimer");
+        exit(EXIT_FAILURE); 
+    }
+
+    sevp.sigev_notify = SIGEV_SIGNAL;
+    sevp.sigev_signo = SIGTERM;
+    sevp.sigev_value.sival_ptr = &timerid;
+
+    if(timer_create(CLOCK_REALTIME,&sevp,&timerid) == -1) 
+    { 
+        perror("timer create setTimer"); 
+        exit(EXIT_FAILURE);
+    }
+
+    its.it_value.tv_sec = timeTotalWorkConvertConverted.tv_sec;
+    its.it_value.tv_nsec = timeTotalWorkConvertConverted.tv_nsec;
+    its.it_interval.tv_sec = timeTotalWorkConvertConverted.tv_sec; 
+    its.it_interval.tv_nsec = timeTotalWorkConvertConverted.tv_nsec;
+
+    if(timer_settime(timerid,0,&its,NULL) == -1) 
+    { 
+        perror("settime setTimer"); 
+        exit(EXIT_FAILURE);
+    }
+}
+//-----------------------------------------------------------------------
+void signalHandler(int sig)
+{
+    exit(EXIT_SUCCESS);
+}
+//---------------------------------------------------
+void exitFunction(void)
+{
+    printf("koniec");
+	//wypisac info zawierajace sumaryczny czas wysykanua komunikatow
+	//oraz minimalne i maksymalne odstep nadchodzacego cyklu
 }
