@@ -177,6 +177,8 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
         perror("clock_getime stopSendMessagesTime");
         exit(EXIT_FAILURE);
     }
+	char* textMsgComingTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
+	makeTextualRepresentationOfTime(textMsgComingTime,msgCommingTime);
 
 	struct timespec delayTime = timeDifference(msg.time,msgCommingTime);
 
@@ -193,8 +195,20 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	char* textDelayTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
 	makeTextualRepresentationOfTime(textDelayTime,delayTime);
 
-    printf("Send time %s Delay time %s\n",msg.textTime,textDelayTime);
+	char* msgToWriteToFile =(char*)calloc(3*TEXT_TIME_REPRESENATION+15,sizeof(char));
+	
+	sprintf(msgToWriteToFile,"%s : %s : %s\n",textMsgComingTime,msg.textTime,textDelayTime);
+
+	printf("Write message to file.\n");
+	if( write(fileToWriteDescriptor,msgToWriteToFile,strlen(msgToWriteToFile)) != strlen(msgToWriteToFile))
+	{
+		perror("write error communication local");
+		exit(EXIT_FAILURE);
+	}
+
 	free(textDelayTime);
+	free(msgToWriteToFile);
+	free(textMsgComingTime);
 }
 //----------------------------------------------------------------------------
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
@@ -281,7 +295,7 @@ int createFile()
 	fileToWriteResultsNumber++;
 
 	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-	printf("%s path fo file\n",pathToFile);
+
 	oldFileToWriteDescriptor = fileToWriteDescriptor;
 	fileToWriteDescriptor = open(pathToFile, O_RDWR|O_CREAT|O_TRUNC, mode);
 	if( fileToWriteDescriptor == -1 )
@@ -290,6 +304,7 @@ int createFile()
 		exit(EXIT_FAILURE);
 	}
 	dup2(fileToWriteDescriptor,oldFileToWriteDescriptor);
+	fileToWriteDescriptor = oldFileToWriteDescriptor;
 	printf("Created new file\n");
 
 	//Check file read permission
@@ -307,7 +322,6 @@ int createFile()
 		{
 			free(pathToFile);
 			close(fileToWriteDescriptor);
-			//fileToWriteResultsNumber++;
 			if(fileToWriteResultsNumber>999) { return -1; }
 			if( createFile() == 0) 
 				return 0;
