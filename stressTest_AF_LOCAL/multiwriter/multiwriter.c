@@ -240,7 +240,7 @@ void sendMessage(struct sockaddr_un mainServerLOCALAddress)
         }
         //Time from program start to sending the message
         struct timespec wallTimeSendMsg = timeDifference(startProgramTime,sendMsgTime);
-        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
+        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));
         makeTextualRepresentationOfTime(textTime,wallTimeSendMsg);
         printf("%s\n",textTime);
         strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION+1);
@@ -281,50 +281,121 @@ void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
     else
     {
         sec = timeStruct.tv_sec%60; 
-        minutes = (timeStruct.tv_sec%3600)/60;
+        minutes = timeStruct.tv_sec/60;
     }
-
-    if(minutes>99)
-    {
-        exit(EXIT_FAILURE);
-    }
-    if(minutes>9)
+	if(minutes>9999999)
+	{
+	    textTime[0]=(char)((minutes/10000000)%10) + (char)48;
+	    textTime[1]=(char)((minutes/1000000)%10) + (char)48;
+        textTime[2]=(char)((minutes/100000)%10) + (char)48;
+		textTime[3]=(char)((minutes/10000)%10) + (char)48;
+		textTime[4]=(char)((minutes/1000)%10) + (char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+	} 
+	else if(minutes>999999)
+	{
+        textTime[0]=(char)48;
+	    textTime[1]=(char)((minutes/1000000)%10) + (char)48;
+        textTime[2]=(char)((minutes/100000)%10) + (char)48;
+		textTime[3]=(char)((minutes/10000)%10) + (char)48;
+		textTime[4]=(char)((minutes/1000)%10) + (char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+	}
+	else if(minutes>99999)
+	{
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)((minutes/100000)%10) + (char)48;
+		textTime[3]=(char)((minutes/10000)%10) + (char)48;
+		textTime[4]=(char)((minutes/1000)%10) + (char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+	}
+	else if(minutes>9999)
+	{
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)48;
+		textTime[3]=(char)((minutes/10000)%10) + (char)48;
+		textTime[4]=(char)((minutes/1000)%10) + (char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+	}
+	else if(minutes>999)
+	{
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)48;
+        textTime[3]=(char)48;
+		textTime[4]=(char)((minutes/1000)%10) + (char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+	}
+    else if(minutes>99)
     {
         textTime[0]=(char)48;
-        textTime[1]=(char)(minutes/10) + (char)48;
-        textTime[2]=(char)(minutes%10) + (char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)48;
+        textTime[3]=(char)48;
+        textTime[4]=(char)48;
+        textTime[5]=(char)((minutes/100)%10) + (char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
+    }
+    else if(minutes>9)
+    {
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)48;
+        textTime[3]=(char)48;
+        textTime[4]=(char)48;
+        textTime[5]=(char)48;
+        textTime[6]=(char)((minutes/10)%10) + (char)48;
+        textTime[7]=(char)(minutes%10) + (char)48;
     }
     else
     {
         textTime[0]=(char)48;
         textTime[1]=(char)48;
-        textTime[2]=(char)(minutes%10)+ (char)48;
+        textTime[2]=(char)48;
+        textTime[3]=(char)48;
+        textTime[4]=(char)48;
+        textTime[5]=(char)48;
+        textTime[6]=(char)48;
+        textTime[7]=(char)(minutes%10)+ (char)48;
     }
-    textTime[3]='*'; textTime[4]=':';
+    textTime[8]='*'; textTime[9]=':';
     if(sec>9)
     {
-        textTime[5]=(char)(sec/10) + (char)48;
-        textTime[6]=(char)(sec%10) + (char)48;
+        textTime[10]=(char)(sec/10) + (char)48;
+        textTime[11]=(char)(sec%10) + (char)48;
     }
     else
     {
-        textTime[5]=(char)48;
-        textTime[6]=(char)(sec%10) + (char)48;
+        textTime[10]=(char)48;
+        textTime[11]=(char)(sec%10) + (char)48;
     }
-    textTime[7]=',';
-    textTime[8]=(char)((nSec/100000000)%10) + (char)48;
-    textTime[9]=(char)((nSec/10000000)%10) + (char)48;
-    textTime[10]='.';
-    textTime[11]=(char)((nSec/1000000)%10) + (char)48;
-    textTime[12]=(char)((nSec/100000)%10) + (char)48;
-    textTime[13]='.';
-    textTime[14]=(char)((nSec/10000)%10) + (char)48;
-    textTime[15]=(char)((nSec/1000)%10) + (char)48;
-    textTime[16]='.';
-    textTime[17]=(char)((nSec/100)%10) + (char)48;
-    textTime[18]=(char)((nSec/10)%10) + (char)48;
-    textTime[19]=(char)(nSec%10) + (char)48;
-    textTime[20]='\0';
+    textTime[12]=',';
+    textTime[13]=(char)((nSec/100000000)%10) + (char)48;
+    textTime[14]=(char)((nSec/10000000)%10) + (char)48;
+    textTime[15]='.';
+    textTime[16]=(char)((nSec/1000000)%10) + (char)48;
+    textTime[17]=(char)((nSec/100000)%10) + (char)48;
+    textTime[18]='.';
+    textTime[19]=(char)((nSec/10000)%10) + (char)48;
+    textTime[20]=(char)((nSec/1000)%10) + (char)48;
+    textTime[21]='.';
+    textTime[22]=(char)((nSec/100)%10) + (char)48;
+    textTime[23]=(char)((nSec/10)%10) + (char)48;
+    textTime[24]=(char)(nSec%10) + (char)48;
+    textTime[25]='\0';
 }
 //-----------------------------------------------------------------------
 struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop)
@@ -436,7 +507,7 @@ void signalHandler(int sig)
 void exitFunction(void)
 {
     struct timespec totalProgramTimeWoks = timeDifference(startSendMessagesTime,stopSendMessagesTime);
-    char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
     makeTextualRepresentationOfTime(textTime,totalProgramTimeWoks);
     printf("Total time for sending messages %s\n",textTime);
 
@@ -451,7 +522,7 @@ void exitFunction(void)
     {
         minSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
     }
-    char* textTimeMIN = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    char* textTimeMIN = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
     makeTextualRepresentationOfTime(textTimeMIN,minSendMsgTime);
     printf("Minimal time interval between cycles %s\n",textTimeMIN);
 
@@ -467,7 +538,7 @@ void exitFunction(void)
     {
         maxSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
     }
-    char* textTimeMAX = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    char* textTimeMAX = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
     makeTextualRepresentationOfTime(textTimeMAX,maxSendMsgTime);
     printf("Maximum time interval between cycles %s\n",textTimeMAX);
 

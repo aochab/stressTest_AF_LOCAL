@@ -17,7 +17,7 @@
 #define UNIX_PATH_MAX 108
 #define EVENTSMAX 50
 #define LOCAL_SERVER_MAX 100
-#define TEXT_TIME_REPRESENATION 20
+#define TEXT_TIME_REPRESENATION 25
 
 int portNr;
 int numOfConnectionLOCAL;
