@@ -271,3 +271,79 @@ struct timespec timeDifference(struct timespec timeStart, struct timespec timeSt
     }
     return resultTimeDifference;
 }
+//-------------------------------------------------------------------------------------------
+int createFile()
+{
+	//Create path fo file
+	int prefixLength = strlen(prefix);
+	char* pathToFile = (char*)calloc(prefixLength+10,sizeof(char));
+	sprintf(pathToFile,"../ODP/%s%03d",prefix,fileToWriteResultsNumber);
+	fileToWriteResultsNumber++;
+
+	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+	printf("%s path fo file\n",pathToFile);
+	oldFileToWriteDescriptor = fileToWriteDescriptor;
+	fileToWriteDescriptor = open(pathToFile, O_RDWR|O_CREAT|O_TRUNC, mode);
+	if( fileToWriteDescriptor == -1 )
+	{
+		printf("Create file error: ");
+		exit(EXIT_FAILURE);
+	}
+	dup2(fileToWriteDescriptor,oldFileToWriteDescriptor);
+	printf("Created new file\n");
+
+	//Check file read permission
+	if(fcntl(fileToWriteDescriptor,F_GETFL) == -1)
+	{
+		perror("fcntl get flag createfile");
+		exit(EXIT_FAILURE);
+	}
+	int permissions = fcntl(fileToWriteDescriptor,F_GETFL) & O_ACCMODE;
+
+	//Search for file with read permission
+	if( permissions != O_RDWR ) 
+	{
+		if(permissions != O_RDONLY)
+		{
+			free(pathToFile);
+			close(fileToWriteDescriptor);
+			//fileToWriteResultsNumber++;
+			if(fileToWriteResultsNumber>999) { return -1; }
+			if( createFile() == 0) 
+				return 0;
+			else 
+				return -1; 
+		}
+	}
+
+	if(fileToWriteResultsNumber>999) 
+	{ 
+		fileToWriteResultsNumber = 0; 
+	}
+	free(pathToFile);
+	return 0;
+}
+//-----------------------------------------------------------------------------
+void setSignalHandlerSIGUSR1CreateFile()
+{
+    struct sigaction sa;
+
+    //handler for signal
+   	sa.sa_flags = SA_RESTART;
+    sa.sa_handler = &signalHandlerSIGUSR1CreateFile;
+
+    if(sigaction(SIGUSR1,&sa,NULL) == -1) 
+    { 
+        perror("sigaction setSignalActionInfoFightEndSIGRTMIN");
+        exit(EXIT_FAILURE); 
+    }
+}
+//-----------------------------------------------------------------------
+void signalHandlerSIGUSR1CreateFile(int sig)
+{
+	if( createFile() == -1)
+	{
+        printf("Can't create and find file with read permission.\nChange prefix\n");
+        exit(EXIT_FAILURE);
+    }
+}

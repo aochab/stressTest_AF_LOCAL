@@ -5,6 +5,7 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -19,6 +20,10 @@
 
 int portNr;
 char* prefix;
+
+int fileToWriteResultsNumber;
+int fileToWriteDescriptor;
+int oldFileToWriteDescriptor;
 
 int server_fd;
 int client_fd;
@@ -50,3 +55,9 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
 
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct);
 struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop);
+
+int createFile();
+
+//SIGNAL
+void setSignalHandlerSIGUSR1CreateFile();
+void signalHandlerSIGUSR1CreateFile(int sig);

@@ -10,8 +10,21 @@ int main(int argc, char* argv[])
 
     getParameters(argc,argv);
     numOfLocalClients=0;
+    fileToWriteResultsNumber=0;
+
+    if( createFile() == -1 )
+    {
+        printf("Can't create and find file with read permission.\nChange prefix\n");
+        exit(EXIT_FAILURE);
+    }
+
+    setSignalHandlerSIGUSR1CreateFile();
+
+
+    printf("Waiting fom INET client...\n\n");
     createServerINET();
 
+    //Time delay beetwen creating LOCAL clients
     struct timespec time; 
     time.tv_sec=0;
     time.tv_nsec=30000000;
@@ -72,7 +85,6 @@ int main(int argc, char* argv[])
                         break;
                     } 
                     createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
-                 //   nanosleep(&time,0);
                     sendInfoToINET(clientLOCALAddress);
                     nanosleep(&time,0);
                 }
