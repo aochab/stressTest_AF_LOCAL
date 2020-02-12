@@ -2,9 +2,15 @@
 
 int main(int argc, char* argv[])
 {
-    if(argc<3)
+    if(argc<2)
     {
-        printf("Too few arguments\n");
+        printf("Too few arguments\nRemember about give port number as first argument\n");
+        exit(EXIT_FAILURE);
+    }
+    portNr=0;
+    if(atexit(exitFunction) != 0 )
+    {
+        perror("ATEXIT error");
         exit(EXIT_FAILURE);
     }
 
@@ -54,7 +60,7 @@ int main(int argc, char* argv[])
     while(1)
     {
         int numReady = epoll_wait(epoll_fd, events, EVENTSMAX, -1);
-
+    
         for( int i=0; i < numReady; i++)
         {
             if( events[i].events & EPOLLERR || 
@@ -81,7 +87,6 @@ int main(int argc, char* argv[])
                     if( getResponseINET(&clientLOCALAddress) == -1)
                     {
                         close(server_fd);
-                        //close(client_fd);
                         break;
                     } 
                     createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
@@ -94,13 +99,13 @@ int main(int argc, char* argv[])
             {
                 if (events[i].data.fd == localClientFds[j])
                 {
-                    communicationLOCAL(localClientsAdresses[j],localClientFds[j]);
+                    if(communicationLOCAL(localClientsAdresses[j],localClientFds[j]) == -1)
+                        break;
                 }
             }
         }
+        if(numReady == numOfLocalClients) break;
     }
 
-
-    free(prefix);
     exit(EXIT_SUCCESS);
 }

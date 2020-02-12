@@ -3,7 +3,11 @@
 void getParameters(int argc, char* argv[])
 {
     int opt;
-    
+    int SFlag = 0;
+    int pFlag = 0;
+    int dFlag = 0;
+    int TFlag = 0;
+
     while ((opt = getopt(argc, argv,"S:p:d:T:")) != -1)
     {
         switch(opt) 
@@ -11,21 +15,25 @@ void getParameters(int argc, char* argv[])
 			case 'S':
             {
                 numOfConnectionLOCAL = strtol(optarg,NULL,10);
+                SFlag = 1;
                 break;
             }
             case 'p':
             {
                 portNr = strtol(optarg,NULL,10);
+                pFlag = 1;
                 break;
             }
 			case 'd':
             {
                 timeIntervalBeetwenMsg = strtof(optarg,NULL);
+                dFlag = 1;
                 break;
             }
 			case 'T':
             {
                 timeTotalWork = strtof(optarg,NULL);
+                TFlag = 1;
                 break;
             }
             default:
@@ -33,6 +41,33 @@ void getParameters(int argc, char* argv[])
                 exit(EXIT_FAILURE);
         }
     } 
+
+    if(!SFlag) { printf("Parameter -d missing : number of connections AF_LOCAL\n"); }
+    if(!pFlag) { printf("Parameter -p missing : server port AF_LOCAL\n"); }
+    if(!dFlag) { printf("Parameter -d missing : minimal message sending interval in microseconds\n"); }
+    if(!TFlag) { printf("Parameter -T missing : total time work in centiseconds\n"); }
+    if(!SFlag || !pFlag || !dFlag || !TFlag) { exit(EXIT_FAILURE); }
+
+    if(numOfConnectionLOCAL<0 || numOfConnectionLOCAL > 100) 
+    {
+        printf("Number of LOCAL connections must be in the range 0 to 100\n");
+        exit(EXIT_FAILURE);
+    }
+    if(portNr>65535 || portNr<1024) 
+    { 
+        printf("Port number must be in the range 1024 to 65535\n");
+        exit(EXIT_FAILURE); 
+    }
+    if(timeIntervalBeetwenMsg<1)
+    {
+        printf("Time interval must be greater than 0\n");
+        exit(EXIT_FAILURE); 
+    }
+    if(timeTotalWork<1)
+    {
+        printf("Time total work must be greater than 0\n");
+        exit(EXIT_FAILURE); 
+    }
 }
 //-----------------------------------------------------------------------------
 void socketToNonblockingMode(int socked_fd)
@@ -100,7 +135,7 @@ void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServ
 	//Linux Abstract socket namespace
 	memset(mainServerLOCALAddress,0, sizeof(struct sockaddr_un));
 	mainServerLOCALAddress->sun_family = AF_LOCAL;
-	//Create random adress
+	//Create random address
 	int pathLength = sizeof(*mainServerLOCALAddress)-2;
 	char* address = (char*)calloc(pathLength,sizeof(char));
 	for(int i=0; i<pathLength; i++)
@@ -129,6 +164,8 @@ void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServ
 	    perror("createServer listen failed"); 
 	    exit(EXIT_FAILURE); 
 	} 
+
+    free(address);
 }
 //-----------------------------------------------------------------------------------
 void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress)
@@ -139,15 +176,6 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 			(socklen_t*)&clientLOCALAddressLength)) != -1)
 	{
 		socketToNonblockingMode(*clientLOCAL_fd);
-	/*	struct epoll_event event;
-		event.data.fd = *clientLOCAL_fd;
-		event.events = EPOLLIN | EPOLLET;
-		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,*clientLOCAL_fd,&event)==-1)
-		{
-			perror("acceptResponseINET epoll_ctl");
-			exit(EXIT_FAILURE);
-		}*/
-		//Save witch connections are succesfull
 		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
 		acceptedConnectionsLOCAL++;
 	}
@@ -239,10 +267,10 @@ void sendMessage(struct sockaddr_un mainServerLOCALAddress)
             exit(EXIT_FAILURE);
         }
         //Time from program start to sending the message
-        struct timespec wallTimeSendMsg = timeDifference(startProgramTime,sendMsgTime);
         char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));
-        makeTextualRepresentationOfTime(textTime,wallTimeSendMsg);
-        printf("%s\n",textTime);
+        makeTextualRepresentationOfTime(textTime,sendMsgTime);
+
+        printf("Send: %s\n",textTime);
         strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION+1);
 
         //Random socket
@@ -545,4 +573,9 @@ void exitFunction(void)
     free(textTime);
     free(textTimeMIN);
     free(textTimeMAX);
+    free(events);
+    for(int i=0; i<acceptedConnectionsLOCAL-1;i++)
+    {
+        close(localsFds[i]);
+    }
 }

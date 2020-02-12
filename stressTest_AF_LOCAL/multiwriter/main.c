@@ -8,12 +8,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    if(argc<9)
-    {
-        printf("Too few arguments\n");
-        exit(EXIT_FAILURE);
-    }
-
     srand(time(NULL));
 
     if(atexit(exitFunction) != 0 )
@@ -99,7 +93,7 @@ int main(int argc, char* argv[])
 
     while(1)
     {
-        printf("ODEBRANO %d\n",receivedAnswersFromINET);
+        printf("Received %d structures\n",receivedAnswersFromINET);
         if(receivedAnswersFromINET == numOfConnectionLOCAL)
         {
             close(client_fd);
@@ -154,6 +148,5 @@ int main(int argc, char* argv[])
         sendMessage(mainServerLOCALAddress);
     }
 
-//TODO Monitorowac ktore sockety zostaly zamkniete w trakcie 
     exit(EXIT_SUCCESS);
 }

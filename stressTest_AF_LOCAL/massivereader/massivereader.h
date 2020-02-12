@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
 
 #define UNIX_PATH_MAX 108
 #define EVENTSMAX 50
@@ -51,7 +52,7 @@ int getResponseINET(struct sockaddr_un *clientLOCALAdress );
 
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);
 void sendInfoToINET(struct sockaddr_un clientLOCALAddress);
-void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
+int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
 
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct);
 struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop);
@@ -61,3 +62,5 @@ int createFile();
 //SIGNAL
 void setSignalHandlerSIGUSR1CreateFile();
 void signalHandlerSIGUSR1CreateFile(int sig);
+
+void exitFunction(void);

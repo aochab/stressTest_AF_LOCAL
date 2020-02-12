@@ -4,7 +4,7 @@ void getParameters(int argc, char* argv[])
 {
     int opt;
     portNr = strtol(argv[1],NULL,10);
-    
+    int OFlag = 0;
     while ((opt = getopt(argc, argv,"O:")) != -1)
     {
         switch(opt) 
@@ -14,13 +14,24 @@ void getParameters(int argc, char* argv[])
                 int prefixLength = strlen(optarg);
                 prefix = (char*)calloc(prefixLength,sizeof(char));
                 strncpy(prefix,optarg,prefixLength);
+				OFlag = 1;
                 break;
             }
             default:
                 printf("Wrong argument - exit program\n");
                 exit(EXIT_FAILURE);
         }
-    } 
+    }
+	if(!OFlag) 
+	{ 
+		printf("Parameter -O missing : file prefix\n"); 
+		exit(EXIT_FAILURE); 
+	} 
+    if(portNr>65535 || portNr<1024) 
+    { 
+        printf("Port number must be in the range 1024 to 65535\n");
+        exit(EXIT_FAILURE); 
+    }
 }
 //-----------------------------------------------------------------------------
 void socketToNonblockingMode(int socked_fd)
@@ -104,7 +115,7 @@ int getResponseINET(struct sockaddr_un *clientLOCALAddress )
 	while(1)
 	{
 		bzero((struct sockaddr_un *)clientLOCALAddress,sizeof(*clientLOCALAddress));
-		//Przeczytaj struktture otrzymana od multiwriter, sprobuj sie polaczyc
+		//Przeczytaj strukture otrzymana od multiwriter, sprobuj sie polaczyc
         int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAddress, sizeof(*clientLOCALAddress));
         if( bytesRead != sizeof(struct sockaddr_un) )
         {
@@ -161,13 +172,14 @@ void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 	}
 }
 //--------------------------------------------------------------------------------
-void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
+int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 {
 	Message msg;
 	int bytesRead = read(clientLocal_fd,&msg,sizeof(Message));
 	if(bytesRead != sizeof(Message))
 	{
 		perror("Read from local error");
+		return -1;
 	}
 
 	//Get Wall clock
@@ -178,7 +190,6 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
         exit(EXIT_FAILURE);
     }
 	char* textMsgComingTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));
-	makeTextualRepresentationOfTime(textMsgComingTime,msgCommingTime);
 
 	struct timespec delayTime = timeDifference(msg.time,msgCommingTime);
 
@@ -192,6 +203,7 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 		printf("Socket verified negative\n"); 
 	}
 
+	makeTextualRepresentationOfTime(textMsgComingTime,msgCommingTime);
 	char* textDelayTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
 	makeTextualRepresentationOfTime(textDelayTime,delayTime);
 
@@ -209,6 +221,7 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	free(textDelayTime);
 	free(msgToWriteToFile);
 	free(textMsgComingTime);
+	return 0;
 }
 //----------------------------------------------------------------------------
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
@@ -431,4 +444,13 @@ void signalHandlerSIGUSR1CreateFile(int sig)
         printf("Can't create and find file with read permission.\nChange prefix\n");
         exit(EXIT_FAILURE);
     }
+}
+//---------------------------------------------------
+void exitFunction(void)
+{
+	close(client_fd);
+	close(fileToWriteDescriptor);
+	close(oldFileToWriteDescriptor);
+	free(prefix);
+	free(events);
 }
