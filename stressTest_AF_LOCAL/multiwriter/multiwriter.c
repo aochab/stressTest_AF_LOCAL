@@ -227,25 +227,42 @@ void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outN
 //--------------------------------------------------------------------------------------
 void sendMessage(struct sockaddr_un mainServerLOCALAddress)
 {
-        int i = rand()%acceptedConnectionsLOCAL; //random socket
         nanosleep(&timeIntervalBeetwenMsgConverted,0);
         
         Message msg;
 
-        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
-        makeTextualRepresentationOfTime(textTime,startSendMessagesTime);
+        //Take time and convert it to textual
+        struct timespec sendMsgTime;
+        if(clock_gettime(CLOCK_REALTIME,&sendMsgTime) == -1) 
+        {
+            perror("clock_getime sendMessage");
+            exit(EXIT_FAILURE);
+        }
+        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+        makeTextualRepresentationOfTime(textTime,sendMsgTime);
         printf("%s\n",textTime);
         strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION);
 
-        struct timespec sendTime; 
-        sendTime.tv_nsec=1;
-        sendTime.tv_sec=125; 
-        msg.time = sendTime;
+        //Random socket
+        int i = rand()%acceptedConnectionsLOCAL; 
 
+        msg.time = sendMsgTime;
         memset(&msg.socketPath,0,sizeof(msg.socketPath));
         strncpy(msg.socketPath,mainServerLOCALAddress.sun_path,sizeof(mainServerLOCALAddress.sun_path));
-        
+
         write(localsFds[i],&msg,sizeof(Message));
+
+        struct timespec stopSendMsgTime;
+        if(clock_gettime(CLOCK_REALTIME,&stopSendMsgTime) == -1) 
+        {
+            perror("clock_getime sendMessage");
+            exit(EXIT_FAILURE);
+        }
+
+        struct timespec msgSendTime = timeDifference(sendMsgTime,stopSendMsgTime);
+        makeInfoAboutSendingMessagesTime(msgSendTime);
+        
+        free(textTime);
 }
 //----------------------------------------------------------------------------
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
@@ -306,10 +323,67 @@ void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
     textTime[19]=(char)(nSec%10) + (char)48;
     textTime[20]='\0';
 }
+//-----------------------------------------------------------------------
+struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop)
+{
+    struct timespec resultTimeDifference;
+    if((timeStop.tv_nsec - timeStart.tv_nsec) < 0)
+    {
+        resultTimeDifference.tv_sec = timeStop.tv_sec - timeStart.tv_sec - 1;
+        resultTimeDifference.tv_nsec = timeStop.tv_nsec - timeStart.tv_nsec + 1000000000;
+    }
+    else 
+    {
+        resultTimeDifference.tv_sec = timeStop.tv_sec - timeStart.tv_sec;
+        resultTimeDifference.tv_nsec = timeStop.tv_nsec - timeStart.tv_nsec;
+    }
+    return resultTimeDifference;
+}
+//---------------------------------------------------------------------------
+void makeInfoAboutSendingMessagesTime(struct timespec sendMsgTime)
+{
+        //Sum total send messagges time
+        totalSendMsgTime.tv_nsec += sendMsgTime.tv_nsec;
+        if(totalSendMsgTime.tv_nsec > 1000000000 )
+        {
+            totalSendMsgTime.tv_sec += sendMsgTime.tv_sec;
+            totalSendMsgTime.tv_sec += 1;
+            totalSendMsgTime.tv_nsec -= 1000000000;
+        }
+        else
+        {
+            totalSendMsgTime.tv_sec += sendMsgTime.tv_sec;
+        }
+
+        //Find min and max send time
+        if( sendMsgTime.tv_sec > maxSendMsgTime.tv_sec )
+        {
+            maxSendMsgTime = sendMsgTime;
+
+        } else if( sendMsgTime.tv_sec == maxSendMsgTime.tv_sec )
+        {
+            if( sendMsgTime.tv_nsec > maxSendMsgTime.tv_nsec )
+            {
+                maxSendMsgTime = sendMsgTime;
+            }
+        } 
+        
+        if( sendMsgTime.tv_sec < minSendMsgTime.tv_sec )
+        {
+            minSendMsgTime = sendMsgTime;
+
+        } else if( sendMsgTime.tv_sec == minSendMsgTime.tv_sec )
+        {
+            if( sendMsgTime.tv_nsec < minSendMsgTime.tv_nsec )
+            {
+                minSendMsgTime = sendMsgTime;
+            }
+        } 
+}
 //--------------------------------------------------------------------------
 void setTimer()
 {
-    struct sigevent sevp;
+    struct sigevent sev;
     struct sigaction sa;
     struct itimerspec its;
     timer_t timerid;
@@ -324,11 +398,11 @@ void setTimer()
         exit(EXIT_FAILURE); 
     }
 
-    sevp.sigev_notify = SIGEV_SIGNAL;
-    sevp.sigev_signo = SIGTERM;
-    sevp.sigev_value.sival_ptr = &timerid;
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGTERM;
+    sev.sigev_value.sival_ptr = &timerid;
 
-    if(timer_create(CLOCK_REALTIME,&sevp,&timerid) == -1) 
+    if(timer_create(CLOCK_REALTIME,&sev,&timerid) == -1) 
     { 
         perror("timer create setTimer"); 
         exit(EXIT_FAILURE);
@@ -358,8 +432,43 @@ void signalHandler(int sig)
 //---------------------------------------------------
 void exitFunction(void)
 {
-    printf("TIME start sec %ld nsec %ld\n",startSendMessagesTime.tv_sec,startSendMessagesTime.tv_nsec);
-	printf("TIME stop sec %ld nsec %ld\n",stopSendMessagesTime.tv_sec,stopSendMessagesTime.tv_nsec);
-	//wypisac info zawierajace sumaryczny czas wysykanua komunikatow
-	//oraz minimalne i maksymalne odstep nadchodzacego cyklu
+    struct timespec totalProgramTimeWoks = timeDifference(startSendMessagesTime,stopSendMessagesTime);
+    char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    makeTextualRepresentationOfTime(textTime,totalProgramTimeWoks);
+    printf("Total time for sending messages %s\n",textTime);
+
+    minSendMsgTime.tv_nsec += timeIntervalBeetwenMsgConverted.tv_nsec;
+    if(minSendMsgTime.tv_nsec > 1000000000 )
+    {
+        minSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
+        minSendMsgTime.tv_sec += 1;
+        minSendMsgTime.tv_nsec -= 1000000000;
+    }
+    else
+    {
+        minSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
+    }
+    char* textTimeMIN = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    makeTextualRepresentationOfTime(textTimeMIN,minSendMsgTime);
+    printf("Minimal time interval between cycles %s\n",textTimeMIN);
+
+
+    maxSendMsgTime.tv_nsec += timeIntervalBeetwenMsgConverted.tv_nsec;
+    if(maxSendMsgTime.tv_nsec > 1000000000 )
+    {
+        maxSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
+        maxSendMsgTime.tv_sec += 1;
+        maxSendMsgTime.tv_nsec -= 1000000000;
+    }
+    else
+    {
+        maxSendMsgTime.tv_sec += timeIntervalBeetwenMsgConverted.tv_sec;
+    }
+    char* textTimeMAX = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
+    makeTextualRepresentationOfTime(textTimeMAX,maxSendMsgTime);
+    printf("Maximum time interval between cycles %s\n",textTimeMAX);
+
+    free(textTime);
+    free(textTimeMIN);
+    free(textTimeMAX);
 }

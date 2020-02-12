@@ -44,6 +44,9 @@ typedef struct message {
 
 struct timespec startSendMessagesTime;
 struct timespec stopSendMessagesTime;
+struct timespec totalSendMsgTime;
+struct timespec minSendMsgTime;
+struct timespec maxSendMsgTime;
 
 //FUNCTIONS
 void getParameters(int argc, char* argv[]);
@@ -58,6 +61,8 @@ void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outN
 
 void sendMessage(struct sockaddr_un mainServerLOCALAddress);
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct);
+struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop);
+void makeInfoAboutSendingMessagesTime(struct timespec sendMsgTime);
 
 void setTimer();
 void signalHandler(int sig);

@@ -32,9 +32,17 @@ int main(int argc, char* argv[])
                                             timeTotalWorkConvertConverted.tv_nsec);
 
     
+    //Initialize variables
     acceptedConnectionsLOCAL = 0;
     receivedAnswersFromINET = 0;
     numOfAcceptedConnectionINMultireader = 0;
+    totalSendMsgTime.tv_nsec = 0;
+    totalSendMsgTime.tv_sec = 0;
+    minSendMsgTime.tv_sec = 99;
+    minSendMsgTime.tv_nsec = 999999999;
+    maxSendMsgTime.tv_sec = 0;
+    maxSendMsgTime.tv_nsec = 0;
+
     //Create main socket Local stream
     struct sockaddr_un mainServerLOCALAddress;
     int mainServerLocal_fd;
