@@ -90,13 +90,13 @@ void getResponseFromINET()
 		{
 			numOfAcceptedConnectionINMultireader++;
 		}
-		printf("From serwer : %d\n",response.sun_family);
+		printf("From serwer INET : %d\n",response.sun_family);
 	}
 	
 }
 //-------------------------------------------------------------------------------
 void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd)
-{//POPRAWNE
+{
 	//Linux Abstract socket namespace
 	memset(mainServerLOCALAddress,0, sizeof(struct sockaddr_un));
 	mainServerLOCALAddress->sun_family = AF_LOCAL;
@@ -161,7 +161,7 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 	}
 }
 //-----------------------------------------------------------------------------------
-void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int* outSec, int *outNsec)
+void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, long* outSec, long *outNsec)
 {
 	float integerPart;
 	float decimalPart = modff(inputMicroSec,&integerPart);
@@ -193,7 +193,7 @@ void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int* outSec, int *outN
     } 
 }
 //-----------------------------------------------------------------------------------
-void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outNsec)
+void changeUnitsCentisecToSecAndNsec(float inputCentiSec, long *outSec, long *outNsec)
 {
 	float integerPart;
 	float decimalPart = modff(inputCentiSec,&integerPart);
@@ -238,14 +238,17 @@ void sendMessage(struct sockaddr_un mainServerLOCALAddress)
             perror("clock_getime sendMessage");
             exit(EXIT_FAILURE);
         }
-        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));;
-        makeTextualRepresentationOfTime(textTime,sendMsgTime);
+        //Time from program start to sending the message
+        struct timespec wallTimeSendMsg = timeDifference(startProgramTime,sendMsgTime);
+        char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
+        makeTextualRepresentationOfTime(textTime,wallTimeSendMsg);
         printf("%s\n",textTime);
-        strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION);
+        strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION+1);
 
         //Random socket
         int i = rand()%acceptedConnectionsLOCAL; 
 
+        //Send structure wall clock
         msg.time = sendMsgTime;
         memset(&msg.socketPath,0,sizeof(msg.socketPath));
         strncpy(msg.socketPath,mainServerLOCALAddress.sun_path,sizeof(mainServerLOCALAddress.sun_path));

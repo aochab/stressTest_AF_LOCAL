@@ -149,7 +149,7 @@ void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
 //---------------------------------------------------------------------------------
 void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 {
-	//odsyla strukture do multiwriter&
+	//odsyla strukture do multiwriter
 	printf("Send %d \n",clientLOCALAddress.sun_family);
 	if( write(client_fd, (struct sockaddr_un *)&clientLOCALAddress, sizeof(clientLOCALAddress)) == -1)
 	{
@@ -163,22 +163,24 @@ void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 //--------------------------------------------------------------------------------
 void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 {
- //zrobis strukture ktora nam to odbierze te reprezentacje czasu bajtu i timesec
- /*char buff[255];
- bzero(buff,sizeof(buff));
-    int bytesRead = read(clientLocal_fd,buff, sizeof(buff));
-    if(bytesRead < 0)
-    {
-            perror("communicationLOCAL read failed");
-    }
-	printf("From local :  %s",buff);*/
-
-    Message msg;
+	Message msg;
 	int bytesRead = read(clientLocal_fd,&msg,sizeof(Message));
 	if(bytesRead != sizeof(Message))
 	{
 		perror("Read from local error");
 	}
+
+	//Get Wall clock
+	struct timespec msgCommingTime;
+	if(clock_gettime(CLOCK_REALTIME,&msgCommingTime) == -1) 
+    {
+        perror("clock_getime stopSendMessagesTime");
+        exit(EXIT_FAILURE);
+    }
+
+	struct timespec delayTime = timeDifference(msg.time,msgCommingTime);
+
+	//Verify path sender
 	if(!strcmp(clientAddress.sun_path,msg.socketPath)) 
 	{
 		printf("Socket verified correctly\n");
@@ -187,5 +189,85 @@ void communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	{ 
 		printf("Socket verified negative\n"); 
 	}
-    printf("time %s timespec s %ld ns %ld\n",msg.textTime,msg.time.tv_sec,msg.time.tv_nsec);
+
+	char* textDelayTime = (char*)calloc(TEXT_TIME_REPRESENATION+1,sizeof(char));
+	makeTextualRepresentationOfTime(textDelayTime,delayTime);
+
+    printf("Send time %s Delay time %s\n",msg.textTime,textDelayTime);
+	free(textDelayTime);
+}
+//----------------------------------------------------------------------------
+void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct)
+{
+    long nSec = timeStruct.tv_nsec;
+    int sec;
+    int minutes;
+    if(timeStruct.tv_sec<60)
+    {
+        sec = timeStruct.tv_sec;
+        minutes = 0;
+    }
+    else
+    {
+        sec = timeStruct.tv_sec%60; 
+        minutes = (timeStruct.tv_sec%3600)/60;
+    }
+
+    if(minutes>99)
+    {
+        exit(EXIT_FAILURE);
+    }
+    if(minutes>9)
+    {
+        textTime[0]=(char)48;
+        textTime[1]=(char)(minutes/10) + (char)48;
+        textTime[2]=(char)(minutes%10) + (char)48;
+    }
+    else
+    {
+        textTime[0]=(char)48;
+        textTime[1]=(char)48;
+        textTime[2]=(char)(minutes%10)+ (char)48;
+    }
+    textTime[3]='*'; textTime[4]=':';
+    if(sec>9)
+    {
+        textTime[5]=(char)(sec/10) + (char)48;
+        textTime[6]=(char)(sec%10) + (char)48;
+    }
+    else
+    {
+        textTime[5]=(char)48;
+        textTime[6]=(char)(sec%10) + (char)48;
+    }
+    textTime[7]=',';
+    textTime[8]=(char)((nSec/100000000)%10) + (char)48;
+    textTime[9]=(char)((nSec/10000000)%10) + (char)48;
+    textTime[10]='.';
+    textTime[11]=(char)((nSec/1000000)%10) + (char)48;
+    textTime[12]=(char)((nSec/100000)%10) + (char)48;
+    textTime[13]='.';
+    textTime[14]=(char)((nSec/10000)%10) + (char)48;
+    textTime[15]=(char)((nSec/1000)%10) + (char)48;
+    textTime[16]='.';
+    textTime[17]=(char)((nSec/100)%10) + (char)48;
+    textTime[18]=(char)((nSec/10)%10) + (char)48;
+    textTime[19]=(char)(nSec%10) + (char)48;
+    textTime[20]='\0';
+}
+//-----------------------------------------------------------------------
+struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop)
+{
+    struct timespec resultTimeDifference;
+    if((timeStop.tv_nsec - timeStart.tv_nsec) < 0)
+    {
+        resultTimeDifference.tv_sec = timeStop.tv_sec - timeStart.tv_sec - 1;
+        resultTimeDifference.tv_nsec = timeStop.tv_nsec - timeStart.tv_nsec + 1000000000;
+    }
+    else 
+    {
+        resultTimeDifference.tv_sec = timeStop.tv_sec - timeStart.tv_sec;
+        resultTimeDifference.tv_nsec = timeStop.tv_nsec - timeStart.tv_nsec;
+    }
+    return resultTimeDifference;
 }

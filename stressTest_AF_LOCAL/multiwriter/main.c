@@ -2,12 +2,18 @@
 
 int main(int argc, char* argv[])
 {
+    if(clock_gettime(CLOCK_REALTIME,&startProgramTime) == -1) 
+    {
+        perror("clock_getime startProgramTime");
+        exit(EXIT_FAILURE);
+    }
+
     if(argc<9)
     {
         printf("Too few arguments\n");
         exit(EXIT_FAILURE);
     }
-    
+
     srand(time(NULL));
 
     if(atexit(exitFunction) != 0 )

@@ -42,6 +42,7 @@ typedef struct message {
     struct timespec time;
 } Message;
 
+struct timespec startProgramTime;
 struct timespec startSendMessagesTime;
 struct timespec stopSendMessagesTime;
 struct timespec totalSendMsgTime;
@@ -56,8 +57,8 @@ void getResponseFromINET();
 void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServerLocal_fd);
 void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockaddr_un clientLOCALAddress);
 
-void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, int *outSec, int *outNsec);
-void changeUnitsCentisecToSecAndNsec(float inputCentiSec, int *outSec, int *outNsec);
+void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, long *outSec, long *outNsec);
+void changeUnitsCentisecToSecAndNsec(float inputCentiSec, long *outSec, long *outNsec);
 
 void sendMessage(struct sockaddr_un mainServerLOCALAddress);
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct);
