@@ -134,14 +134,14 @@ int main(int argc, char* argv[])
         }
     }
     printf("\n\n===================== SEND MESSAGES =====================\n\n");
-
-    setTimer();
     
     if(clock_gettime(CLOCK_REALTIME,&startSendMessagesTime) == -1) 
     {
         perror("clock_getime startSendMessagesTime");
         exit(EXIT_FAILURE);
     }
+    
+    setTimer();
 
     while(1)
     {

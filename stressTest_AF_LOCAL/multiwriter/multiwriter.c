@@ -58,12 +58,12 @@ void getParameters(int argc, char* argv[])
         printf("Port number must be in the range 1024 to 65535\n");
         exit(EXIT_FAILURE); 
     }
-    if(timeIntervalBeetwenMsg<1)
+    if(timeIntervalBeetwenMsg<=0)
     {
         printf("Time interval must be greater than 0\n");
         exit(EXIT_FAILURE); 
     }
-    if(timeTotalWork<1)
+    if(timeTotalWork<=0)
     {
         printf("Time total work must be greater than 0\n");
         exit(EXIT_FAILURE); 
@@ -191,66 +191,15 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 //-----------------------------------------------------------------------------------
 void changeUnitsMicrosecToSecAndNsec(float inputMicroSec, long* outSec, long *outNsec)
 {
-	float integerPart;
-	float decimalPart = modff(inputMicroSec,&integerPart);
-    if(integerPart<1000000)
-    {
-        *outNsec = integerPart * 1000;
-    } 
-    else
-    {//Unit conversion microsec on sec and nsec
-        if(fmod(integerPart,1000000)!=0) 
-        { 
-            *outNsec = fmod(integerPart,1000000);
-            integerPart -= *outNsec;
-            *outNsec *= 1000;
-        }
-        int multiplier = 0;
-        while(fmod(integerPart,1000000)==0)
-        {
-            integerPart /= 1000000;
-            multiplier++;
-        }
-        multiplier--;
-        for(int i=0;i<multiplier;i++)
-        {
-            integerPart *= 1000000;
-        }
-        *outSec = integerPart;
-		*outNsec = decimalPart*1000;
-    } 
+    *outSec = (long) inputMicroSec/1000000;
+    *outNsec = (long) (inputMicroSec*1000)%1000000000;
 }
 //-----------------------------------------------------------------------------------
 void changeUnitsCentisecToSecAndNsec(float inputCentiSec, long *outSec, long *outNsec)
 {
-	float integerPart;
-	float decimalPart = modff(inputCentiSec,&integerPart);
-    if(integerPart<100)
-    {
-        *outNsec = integerPart * 10000000;
-    } 
-    else
-    {//Unit conversion ds on sec and nsec
-        if(fmod(integerPart,100)!=0) 
-        { 
-            *outNsec = fmod(integerPart,10);
-            integerPart -= *outNsec;
-            *outNsec *= 10000000;
-        }
-        int multiplier = 0;
-        while(fmod(integerPart,100)==0)
-        {
-            integerPart /= 100;
-            multiplier++;
-        }
-        multiplier--;
-        for(int i=0;i<multiplier;i++)
-        {
-            integerPart *= 100;
-        }
-        *outSec = integerPart;
-		*outNsec = decimalPart*10000000;
-    } 
+    float time = 10000000 * inputCentiSec;
+    *outSec = (long) time/1000000000;
+    *outNsec = (long) time%1000000000;
 }
 //--------------------------------------------------------------------------------------
 void sendMessage(struct sockaddr_un mainServerLOCALAddress)
@@ -270,7 +219,7 @@ void sendMessage(struct sockaddr_un mainServerLOCALAddress)
         char* textTime = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));
         makeTextualRepresentationOfTime(textTime,sendMsgTime);
 
-        printf("Send: %s\n",textTime);
+
         strncpy(msg.textTime,textTime,TEXT_TIME_REPRESENATION+1);
 
         //Random socket
@@ -553,7 +502,7 @@ void exitFunction(void)
     char* textTimeMIN = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
     makeTextualRepresentationOfTime(textTimeMIN,minSendMsgTime);
     printf("Minimal time interval between cycles %s\n",textTimeMIN);
-
+    
 
     maxSendMsgTime.tv_nsec += timeIntervalBeetwenMsgConverted.tv_nsec;
     if(maxSendMsgTime.tv_nsec > 1000000000 )
@@ -569,6 +518,9 @@ void exitFunction(void)
     char* textTimeMAX = (char*)calloc(TEXT_TIME_REPRESENATION,sizeof(char));;
     makeTextualRepresentationOfTime(textTimeMAX,maxSendMsgTime);
     printf("Maximum time interval between cycles %s\n",textTimeMAX);
+
+    struct timespec timeDelay; timeDelay.tv_sec=0; timeDelay.tv_nsec=100000000;
+    nanosleep(&timeDelay,0);
 
     free(textTime);
     free(textTimeMIN);

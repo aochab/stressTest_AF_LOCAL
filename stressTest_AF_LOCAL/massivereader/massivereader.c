@@ -165,7 +165,6 @@ void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
 void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 {
 	//odsyla strukture do multiwriter
-	printf("Send %d \n",clientLOCALAddress.sun_family);
 	if( write(client_fd, (struct sockaddr_un *)&clientLOCALAddress, sizeof(clientLOCALAddress)) == -1)
 	{
 		if( errno != ECONNRESET )
@@ -223,7 +222,7 @@ int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	
 	sprintf(msgToWriteToFile,"%s : %s : %s\n",textMsgComingTime,msg.textTime,textDelayTime);
 
-	printf("Write message to file.\n");
+	//printf("Write message to file.\n");
 	if( write(fileToWriteDescriptor,msgToWriteToFile,strlen(msgToWriteToFile)) != strlen(msgToWriteToFile))
 	{
 		perror("write error communication local");

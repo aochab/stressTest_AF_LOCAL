@@ -12,4 +12,4 @@ $(programs):
 	$(MAKE) --directory=$@
 	
 clean: 
-	rm -r ODP/
+	$(MAKE) -C multiwriter  clean; $(MAKE) -C massivereader clean; rm -r ODP/
