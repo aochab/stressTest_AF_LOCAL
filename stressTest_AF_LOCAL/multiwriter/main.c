@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     minSendMsgTime.tv_sec = 999;
     minSendMsgTime.tv_nsec = 999999999;
     maxSendMsgTime.tv_sec = 0;
-    maxSendMsgTime.tv_nsec = 1;
+    maxSendMsgTime.tv_nsec = 0;
 
     //Create main socket Local stream
     struct sockaddr_un mainServerLOCALAddress;
@@ -117,15 +117,13 @@ int main(int argc, char* argv[])
                 close(events[i].data.fd);
             }
             //Accept connection to LOCAL
-            if (events[i].data.fd == mainServerLocal_fd)
+            else if (events[i].data.fd == mainServerLocal_fd)
             {
                 //Set new socket
                 int clientLocal_fd;
                 acceptResponseLOCAL(mainServerLocal_fd,&clientLocal_fd,mainServerLOCALAddress);
                 printf("Accept response from multireader - connected to LOCAl\n");
-            }
-
-            if (events[i].data.fd == client_fd)
+            } else if (events[i].data.fd == client_fd)
             {
                 //INET respones about connection with local
                 printf("Get response from INET\n");

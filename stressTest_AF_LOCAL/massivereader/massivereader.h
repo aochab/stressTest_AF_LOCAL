@@ -42,17 +42,22 @@ typedef struct message {
     struct timespec time;
 } Message;
 
+typedef struct localClientInfo {
+    struct sockaddr_un address;
+    int fd;
+} LocalClientInfo;
+
 //FUNCTIONS
 void getParameters(int argc, char* argv[]);
 void socketToNonblockingMode(int socked_fd);
 
 void createServerINET();
 void acceptResponseINET();
-int getResponseINET(struct sockaddr_un *clientLOCALAdress );
+void getResponseINET();
 
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd);
 void sendInfoToINET(struct sockaddr_un clientLOCALAddress);
-int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd);
+int communicationLOCAL(LocalClientInfo *client_info);
 
 void makeTextualRepresentationOfTime(char* textTime, struct timespec timeStruct);
 struct timespec timeDifference(struct timespec timeStart, struct timespec timeStop);
@@ -61,6 +66,6 @@ int createFile();
 
 //SIGNAL
 void setSignalHandlerSIGUSR1CreateFile();
-void signalHandlerSIGUSR1CreateFile(int sig);
+void signalHandlerSIGUSR1CreateFile();
 
 void exitFunction(void);

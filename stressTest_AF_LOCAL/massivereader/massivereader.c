@@ -114,20 +114,24 @@ void acceptResponseINET()
 
 }
 //------------------------------------------------------------------------
-int getResponseINET(struct sockaddr_un *clientLOCALAddress )
+void getResponseINET( )
 { 
 	while(1)
 	{
-		bzero((struct sockaddr_un *)clientLOCALAddress,sizeof(*clientLOCALAddress));
+		struct sockaddr_un clientLOCALAddress;
+		int clientLocal_fd;
+
+		bzero((struct sockaddr_un *)&clientLOCALAddress,sizeof(clientLOCALAddress));
 		//Przeczytaj strukture otrzymana od multiwriter, sprobuj sie polaczyc
-        int bytesRead = read(client_fd,(struct sockaddr_un *)clientLOCALAddress, sizeof(*clientLOCALAddress));
+        int bytesRead = read(client_fd,(struct sockaddr_un *)&clientLOCALAddress, sizeof(struct sockaddr_un));
         if( bytesRead != sizeof(struct sockaddr_un) )
         {
-			return -1;
+			break;
         }
-		break;
+
+		createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
+		sendInfoToINET(clientLOCALAddress);
 	}
-	return 0;
 }
 //----------------------------------------------------------------------------
 void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
@@ -147,18 +151,23 @@ void createClientLOCAL(struct sockaddr_un *clientAddress, int *clientLocal_fd)
 		printf("Connected to local server\n");
 		localClientFds[numOfLocalClients] = *clientLocal_fd;
 		localClientsAdresses[numOfLocalClients] = *clientAddress;
-		numOfLocalClients++;
 
 		//SET EPOLL
 		socketToNonblockingMode(*clientLocal_fd);
+		LocalClientInfo* client_info = (LocalClientInfo*)calloc(1,sizeof(LocalClientInfo));
+		client_info->fd = *clientLocal_fd;
+		client_info->address = *clientAddress;
+
 		struct epoll_event event;
-		event.data.fd = *clientLocal_fd;
+		event.data.fd = client_info->fd;
+		event.data.ptr = client_info;
 		event.events = EPOLLIN | EPOLLET;
 		if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,*clientLocal_fd,&event)==-1)
 		{
 			perror("createClientLOCAL epoll_ctl");
 			exit(EXIT_FAILURE);
 		}
+		numOfLocalClients++;
 	}
 }
 //---------------------------------------------------------------------------------
@@ -175,22 +184,16 @@ void sendInfoToINET(struct sockaddr_un clientLOCALAddress)
 	}
 }
 //--------------------------------------------------------------------------------
-int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
+//int communicationLOCAL(struct sockaddr_un *clientAddress, int clientLocal_fd)
+int communicationLOCAL(LocalClientInfo *client_info)
 {
+	//printf("%s \n",client_info->address.sun_family);
 	Message msg;
-	int bytesRead = read(clientLocal_fd,&msg,sizeof(Message));
+	int bytesRead = read(client_info->fd,&msg,sizeof(Message));
 	if(bytesRead != sizeof(Message))
-	{
-		if( errno == EBADF)
-		{
-			printf("Local server end work\n");
-			return -1;
-		}
-		else
-		{
-			perror("Read from local error");
-			return -1;
-		}
+	
+		perror("Read from local");
+		return -1;
 	}
 
 	//Get Wall clock
@@ -205,11 +208,7 @@ int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	struct timespec delayTime = timeDifference(msg.time,msgCommingTime);
 
 	//Verify path sender
-	if(!strcmp(clientAddress.sun_path,msg.socketPath)) 
-	{
-		printf("Socket verified correctly\n");
-	}
-	else 
+	if(strcmp(client_info->address.sun_path,msg.socketPath) != 0)  
 	{ 
 		printf("Socket verified negative\n"); 
 	}
@@ -223,7 +222,7 @@ int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	sprintf(msgToWriteToFile,"%s : %s : %s\n",textMsgComingTime,msg.textTime,textDelayTime);
 
 	//printf("Write message to file.\n");
-	if( write(fileToWriteDescriptor,msgToWriteToFile,strlen(msgToWriteToFile)) != strlen(msgToWriteToFile))
+	if( write(fileToWriteDescriptor,msgToWriteToFile,strlen(msgToWriteToFile)) == -1)
 	{
 		perror("write error communication local");
 		exit(EXIT_FAILURE);
@@ -448,7 +447,7 @@ void setSignalHandlerSIGUSR1CreateFile()
     }
 }
 //-----------------------------------------------------------------------
-void signalHandlerSIGUSR1CreateFile(int sig)
+void signalHandlerSIGUSR1CreateFile()
 {
 	if( createFile() == -1)
 	{

@@ -67,5 +67,5 @@ struct timespec timeDifference(struct timespec timeStart, struct timespec timeSt
 void makeInfoAboutSendingMessagesTime(struct timespec sendMsgTime);
 
 void setTimer();
-void signalHandler(int sig);
+void signalHandler();
 void exitFunction(void);

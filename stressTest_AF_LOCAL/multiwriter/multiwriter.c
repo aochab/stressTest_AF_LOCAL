@@ -106,27 +106,32 @@ void createClientINET()
         perror("createClientINET connect failed"); 
 		exit(EXIT_FAILURE);
     }
+
+    socketToNonblockingMode(client_fd);
 	
 }
 //------------------------------------------------------------------------------
 void getResponseFromINET()
 {
-	struct sockaddr_un response;
+    while(1)
+    {
+        struct sockaddr_un response;
 
-	memset(&response,0, sizeof(struct sockaddr_un));
-	if(read(client_fd, (struct sockaddr_un *)&response, sizeof(response)) != sizeof(struct sockaddr_un))
-	{
-		perror("getResponseFromINET failed");
-	}
-	else 
-	{
-		receivedAnswersFromINET++;
-		if( response.sun_family == AF_LOCAL ) 
-		{
-			numOfAcceptedConnectionINMultireader++;
-		}
-		printf("From serwer INET : %d\n",response.sun_family);
-	}
+        memset(&response,0, sizeof(struct sockaddr_un));
+        if(read(client_fd, (struct sockaddr_un *)&response, sizeof(response)) != sizeof(struct sockaddr_un))
+        {
+            break;
+        }
+        else 
+        {
+            receivedAnswersFromINET++;
+            if( response.sun_family == AF_LOCAL ) 
+            {
+                numOfAcceptedConnectionINMultireader++;
+            }
+            printf("From serwer INET : %d\n",response.sun_family);
+        }
+    }
 	
 }
 //-------------------------------------------------------------------------------
@@ -159,7 +164,7 @@ void createSerwerLOCAL(struct sockaddr_un *mainServerLOCALAddress, int *mainServ
 
 	socketToNonblockingMode(*mainServerLocal_fd);
 
-	if (listen(*mainServerLocal_fd, 5) < 0) 
+	if (listen(*mainServerLocal_fd, numOfConnectionLOCAL) < 0) 
 	{ 
 	    perror("createServer listen failed"); 
 	    exit(EXIT_FAILURE); 
@@ -178,7 +183,17 @@ void acceptResponseLOCAL(int serverLocal_fd, int *clientLOCAL_fd, struct sockadd
 		socketToNonblockingMode(*clientLOCAL_fd);
 		localsFds[acceptedConnectionsLOCAL]=*clientLOCAL_fd;
 		acceptedConnectionsLOCAL++;
-	}
+
+        //epoll 
+        struct epoll_event ev;
+        ev.data.fd =*clientLOCAL_fd;
+        ev.events = EPOLLIN | EPOLLET ;
+        if( epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *clientLOCAL_fd, &ev) == -1)
+        {
+            perror("Epoll_ctl eventServer LOCAL main");
+            exit(EXIT_FAILURE);
+	    }
+    }
 	else
 	{
 		if( (errno != EAGAIN) && (errno != EWOULDBLOCK))
@@ -471,7 +486,7 @@ void setTimer()
     }
 }
 //-----------------------------------------------------------------------
-void signalHandler(int sig)
+void signalHandler()
 {
 	if(clock_gettime(CLOCK_REALTIME,&stopSendMessagesTime) == -1) 
     {

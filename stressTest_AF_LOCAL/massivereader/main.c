@@ -67,43 +67,23 @@ int main(int argc, char* argv[])
                 events[i].events & EPOLLHUP || 
                 !(events[i].events & EPOLLIN))
             {
-                
                 close(events[i].data.fd);
             }
-           
-            if (events[i].data.fd == server_fd)
+            else if (events[i].data.fd == server_fd)
             {
                 //Set new socket
                 printf("Accept response inet\n");
                 acceptResponseINET();
             }
-            else
+            else if (events[i].data.fd == client_fd)
             {
-                //new LOCAL Socket
-                while(1)
-                {
-                    struct sockaddr_un clientLOCALAddress;
-                    int clientLocal_fd;
-                    if( getResponseINET(&clientLOCALAddress) == -1)
-                    {
-                        break;
-                    } 
-                    createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);
-                    sendInfoToINET(clientLOCALAddress);
-                    nanosleep(&time,0);
-                }
+               getResponseINET();
             }
-
-            for(int j=0; j<numOfLocalClients; j++)
+            else 
             {
-                if (events[i].data.fd == localClientFds[j])
-                {
-                    if(communicationLOCAL(localClientsAdresses[j],localClientFds[j]) == -1)
-                        break;
-                }
+                communicationLOCAL(events[i].data.ptr);
             }
         }
-        if(numReady == numOfLocalClients) break;
     }
 
     exit(EXIT_SUCCESS);

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall
+CFLAGS=-Wall -Werror -Wextra -w 
 DEPS = massivereader.h
 OBJ  = main.o massivereader.o
 
