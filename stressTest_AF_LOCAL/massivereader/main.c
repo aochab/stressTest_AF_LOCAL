@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
                 events[i].events & EPOLLHUP || 
                 !(events[i].events & EPOLLIN))
             {
-                perror("Epoll main error");
+                
                 close(events[i].data.fd);
             }
            
@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
                     int clientLocal_fd;
                     if( getResponseINET(&clientLOCALAddress) == -1)
                     {
-                        close(server_fd);
                         break;
                     } 
                     createClientLOCAL(&clientLOCALAddress,&clientLocal_fd);

@@ -42,7 +42,7 @@ void getParameters(int argc, char* argv[])
         }
     } 
 
-    if(!SFlag) { printf("Parameter -d missing : number of connections AF_LOCAL\n"); }
+    if(!SFlag) { printf("Parameter -S missing : number of connections AF_LOCAL\n"); }
     if(!pFlag) { printf("Parameter -p missing : server port AF_LOCAL\n"); }
     if(!dFlag) { printf("Parameter -d missing : minimal message sending interval in microseconds\n"); }
     if(!TFlag) { printf("Parameter -T missing : total time work in centiseconds\n"); }

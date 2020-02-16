@@ -3,8 +3,8 @@
 void getParameters(int argc, char* argv[])
 {
     int opt;
-    portNr = strtol(argv[1],NULL,10);
     int OFlag = 0;
+
     while ((opt = getopt(argc, argv,"O:")) != -1)
     {
         switch(opt) 
@@ -22,6 +22,10 @@ void getParameters(int argc, char* argv[])
                 exit(EXIT_FAILURE);
         }
     }
+
+	portNr = strtol(argv[optind],NULL,10);
+
+
 	if(!OFlag) 
 	{ 
 		printf("Parameter -O missing : file prefix\n"); 
@@ -178,8 +182,16 @@ int communicationLOCAL(struct sockaddr_un clientAddress, int clientLocal_fd)
 	int bytesRead = read(clientLocal_fd,&msg,sizeof(Message));
 	if(bytesRead != sizeof(Message))
 	{
-		perror("Read from local error");
-		return -1;
+		if( errno == EBADF)
+		{
+			printf("Local server end work\n");
+			return -1;
+		}
+		else
+		{
+			perror("Read from local error");
+			return -1;
+		}
 	}
 
 	//Get Wall clock
@@ -449,6 +461,7 @@ void signalHandlerSIGUSR1CreateFile(int sig)
 void exitFunction(void)
 {
 	close(client_fd);
+	close(server_fd);
 	close(fileToWriteDescriptor);
 	close(oldFileToWriteDescriptor);
 	free(prefix);
